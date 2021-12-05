@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net6.0-windows10.0.22000.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>Nrrdio.MapGenerator.Client</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -11,6 +11,7 @@
     <UseWinUI>true</UseWinUI>
     <EnablePreviewMsixTooling>true</EnablePreviewMsixTooling>
     <AssemblyName>Nrrdio.MapGenerator.Client</AssemblyName>
+    <SupportedOSPlatformVersion>10.0.22000.0</SupportedOSPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="MainPage.xaml" />
@@ -37,6 +38,9 @@
        package has not yet been restored -->
   <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnablePreviewMsixTooling)'=='true'">
     <ProjectCapability Include="Msix" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Nrrdio.Utilities\Nrrdio.Utilities.WinUI\Nrrdio.Utilities.WinUI.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Page Update="MainPage.xaml">
