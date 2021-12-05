@@ -1,32 +1,28 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Shapes;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Toolkit.Mvvm.DependencyInjection;
+using Microsoft.UI.Xaml;
+using Nrrdio.Utilities.Loggers;
 
 namespace Nrrdio.MapGenerator.Client {
     public partial class App : Application {
+        public new static App Current => (App)Application.Current;
+
+        Window mainWindow;
+
         public App() {
+            Ioc.Default.ConfigureServices(
+                new ServiceCollection()
+                    .AddSingleton<ILoggerProvider, HandlerLoggerProvider>()
+                    .AddLogging()
+                .BuildServiceProvider());
+
             InitializeComponent();
         }
-        
-        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args) {
+
+        protected override void OnLaunched(LaunchActivatedEventArgs args) {
             mainWindow = new MainWindow();
             mainWindow.Activate();
         }
-
-        Window mainWindow;
     }
 }
