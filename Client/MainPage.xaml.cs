@@ -3,13 +3,14 @@ using Microsoft.Toolkit.Mvvm.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using Nrrdio.MapGenerator.Services;
 using Nrrdio.Utilities.Loggers;
+using System;
 
 namespace Nrrdio.MapGenerator.Client {
     public sealed partial class MainPage : Page {
         public MainPage() => InitializeComponent();
 
         void MainPage_EntryAddedEvent(object sender, LogEntryEventArgs e) {
-            Log.Text = $"{e.LogEntry.Message}\n{Log.Text}";
+            Log.Text = $"{DateTime.Now:HH:mm:ss:ff}: {e.LogEntry.Message}\n{Log.Text}";
         }
 
         void PageLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
@@ -20,6 +21,8 @@ namespace Nrrdio.MapGenerator.Client {
             log.LogInformation("hahahhaha");
             log.LogInformation("hahahhaha");
             log.LogInformation("hahahhaha");
+
+            ViewModel.LogTest();
         }
     }
 }

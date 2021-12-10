@@ -1,8 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Toolkit.Mvvm.DependencyInjection;
-using Nrrdio.Utilities.Loggers;
-using System;
-using System.Diagnostics;
 
 namespace Nrrdio.MapGenerator.Services {
     public class MainPageViewModel {
@@ -10,15 +7,12 @@ namespace Nrrdio.MapGenerator.Services {
 
         public MainPageViewModel() {
             Log = Ioc.Default.GetService<ILogger<MainPageViewModel>>();
-            HandlerLoggerProvider.Instances[typeof(MainPageViewModel).FullName].EntryAddedEvent += MainPageViewModel_EntryAddedEvent;
-            
+        }
+
+        public void LogTest() {
             Log.LogInformation("test");
             Log.LogError("error!!");
             Log.LogWarning("warnung");
-        }
-
-        void MainPageViewModel_EntryAddedEvent(object sender, LogEntryEventArgs e) {
-            Debug.WriteLine(e.LogEntry.Message);
         }
     }
 }
