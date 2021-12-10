@@ -13,6 +13,8 @@ namespace Nrrdio.MapGenerator.Services {
             HandlerLoggerProvider.Instances[typeof(MainPageViewModel).FullName].EntryAddedEvent += MainPageViewModel_EntryAddedEvent;
             
             Log.LogInformation("test");
+            Log.LogError("error!!");
+            Log.LogWarning("warnung");
         }
 
         void MainPageViewModel_EntryAddedEvent(object sender, LogEntryEventArgs e) {
