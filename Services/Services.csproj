@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Nrrdio.Utilities\Nrrdio.Utilities.Maths\Nrrdio.Utilities.Maths.csproj" />
     <ProjectReference Include="..\Nrrdio.Utilities\Nrrdio.Utilities\Nrrdio.Utilities.csproj" />
   </ItemGroup>
 </Project>

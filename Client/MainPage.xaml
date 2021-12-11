@@ -10,11 +10,12 @@
         <services:MainPageViewModel x:Name="ViewModel" />
     </Page.DataContext>
     
-    <StackPanel>
+    <StackPanel Orientation="Horizontal">
         <ScrollViewer VerticalScrollMode="Auto"
 			          VerticalScrollBarVisibility="Auto"
                       MinHeight="50"
-			          MaxHeight="200">
+			          MaxHeight="200"
+                      Width="400">
             
             <TextBlock x:Name="Log"
 				       FontWeight="Bold"
@@ -22,5 +23,9 @@
 				       MaxWidth="{Binding ElementName=Splitter, Path=ActualWidth}" />
             
         </ScrollViewer>
+
+        <Canvas
+            Name="OutputCanvas"
+            Margin="10" />
     </StackPanel>
 </Page>
