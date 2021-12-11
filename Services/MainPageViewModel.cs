@@ -34,7 +34,7 @@ namespace Nrrdio.MapGenerator.Services {
                 }
             }
         }
-        int pointCount = 2000;
+        int pointCount = 15;
 
         public Canvas OutputCanvas { get; set; }
 

@@ -1,6 +1,7 @@
 ﻿using Nrrdio.Utilities.Maths;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Nrrdio.MapGenerator.Services {
@@ -50,11 +51,12 @@ namespace Nrrdio.MapGenerator.Services {
             return points;
         }
 
-        public IEnumerable<Polygon> DelaunayTriangles(List<Point> points) {
+        // https://www.codeguru.com/cplusplus/delaunay-triangles/
+        public IEnumerable<Polygon> DelaunayTriangles(IEnumerable<Point> points) {
             var borderVertices = Border.Vertices.Count;
             int j;
 
-            var triangles = new HashSet<Polygon> { Border };
+            var triangles = new HashSet<Polygon>();
 
             for (var i = 0; i < borderVertices; i++) {
                 j = (i + 1) % borderVertices;
@@ -62,6 +64,8 @@ namespace Nrrdio.MapGenerator.Services {
                 var triangle = new Polygon(Border.Centroid, Border.Vertices[i], Border.Vertices[j]);
                 triangles.Add(triangle);
             }
+
+            Debug.Assert(triangles.Count == 4);
 
             foreach (var point in points) {
                 var badTriangles = findBadTriangles(point, triangles);
@@ -114,16 +118,20 @@ namespace Nrrdio.MapGenerator.Services {
         }
 
         public IEnumerable<Segment> VoronoiEdges(IEnumerable<Polygon> triangles) {
-            var edges = new HashSet<Segment>();
+            var voronoiEdges = new HashSet<Segment>();
 
             foreach (var triangle in triangles) {
-                foreach (var neighbor in triangle.Neighbors) {
-                    var edge = new Segment(triangle.Circumcircle.Center, neighbor.Circumcircle.Center);
-                    edges.Add(edge);
+                foreach (var edge in triangle.Edges) {
+                    var neighbors = triangles.Where(other => other.Edges.Contains(edge));
+
+                    foreach (var neighbor in neighbors) {
+                        var voronoiEdge = new Segment(triangle.Circumcircle.Center, neighbor.Circumcircle.Center);
+                        voronoiEdges.Add(voronoiEdge);
+                    }
                 }
             }
 
-            return edges;
+            return voronoiEdges;
         }
     }
 }
