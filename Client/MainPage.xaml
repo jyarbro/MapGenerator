@@ -2,30 +2,25 @@
     x:Class="Nrrdio.MapGenerator.Client.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:services="using:Nrrdio.MapGenerator.Services"
     Loaded="PageLoaded"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Page.DataContext>
-        <services:MainPageViewModel x:Name="ViewModel" />
-    </Page.DataContext>
-    
     <StackPanel Orientation="Horizontal">
         <ScrollViewer VerticalScrollMode="Auto"
 			          VerticalScrollBarVisibility="Auto"
                       MinHeight="50"
 			          MaxHeight="200"
-                      Width="400">
-            
-            <TextBlock x:Name="Log"
+                      Width="300">
+            <TextBlock x:Name="LogText"
 				       FontWeight="Bold"
 				       TextWrapping="Wrap"
 				       MaxWidth="{Binding ElementName=Splitter, Path=ActualWidth}" />
-            
         </ScrollViewer>
 
         <Canvas
             Name="OutputCanvas"
-            Margin="10" />
+            Margin="10" 
+            Width="600"
+            Height="600"/>
     </StackPanel>
 </Page>

@@ -7,22 +7,34 @@ using System;
 
 namespace Nrrdio.MapGenerator.Client {
     public sealed partial class MainPage : Page {
-        public MainPage() => InitializeComponent();
+        ILogger<MainPageViewModel> Log { get; }
+        MainPageViewModel ViewModel { get; }
+
+        public MainPage() {
+            InitializeComponent();
+            
+            Log = Ioc.Default.GetService<ILogger<MainPageViewModel>>();
+
+            var handlerLog = Log as HandlerLogger;
+
+            if (handlerLog is not null) {
+                handlerLog.EntryAddedEvent += MainPage_EntryAddedEvent;
+            }
+
+            ViewModel = Ioc.Default.GetService<MainPageViewModel>();
+            ViewModel.OutputCanvas = OutputCanvas;
+            ViewModel.UpdateSeed();
+
+            DataContext = ViewModel;
+        }
 
         void MainPage_EntryAddedEvent(object sender, LogEntryEventArgs e) {
-            Log.Text = $"{DateTime.Now:HH:mm:ss:ff}: {e.LogEntry.Message}\n{Log.Text}";
+            LogText.Text = $"{DateTime.Now:HH:mm:ss:ff}: {e.LogEntry.Message}\n{LogText.Text}";
         }
 
         void PageLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
-            HandlerLoggerProvider.Instances[typeof(MainPageViewModel).FullName].EntryAddedEvent += MainPage_EntryAddedEvent;
-
-            var log = Ioc.Default.GetService<ILogger<MainPageViewModel>>();
-
-            log.LogInformation("hahahhaha");
-            log.LogInformation("hahahhaha");
-            log.LogInformation("hahahhaha");
-
-            ViewModel.LogTest();
+            Log.LogInformation(nameof(PageLoaded));
+            ViewModel.GenerateAndDraw();
         }
     }
 }

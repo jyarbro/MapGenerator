@@ -7,7 +7,7 @@ namespace Nrrdio.MapGenerator.Services {
     public class Generator {
         public Polygon Border { get; set; }
 
-        public Generator(Polygon border) {
+        public void SetBorder(Polygon border) {
             if (!border.IsConvex()) {
                 throw new ArgumentException("Border polygon must be convex because I'm too lazy to program around complex polys.");
             }
@@ -42,8 +42,9 @@ namespace Nrrdio.MapGenerator.Services {
 
                 if (Border.Contains(point)) {
                     points.Add(point);
-                    i++;
                 }
+
+                i++;
             }
 
             return points;

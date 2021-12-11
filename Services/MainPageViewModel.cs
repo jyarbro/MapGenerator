@@ -61,13 +61,41 @@ namespace Nrrdio.MapGenerator.Services {
         int canvasHeight;
 
         ILogger<MainPageViewModel> Log { get; }
-        Generator Generator { get; set; }
-        Visualizer Visualizer { get; set; }
+        Generator Generator { get; }
+        Visualizer Visualizer { get; }
         Task SizeChangedTask { get; set; }
         bool Waiting { get; set; }
 
-        public MainPageViewModel() {
-            Log = Ioc.Default.GetService<ILogger<MainPageViewModel>>();
+        public MainPageViewModel(
+            ILogger<MainPageViewModel> log,
+            Generator generator,
+            Visualizer visualizer
+        ) {
+            Log = log;
+            Generator = generator;
+            Visualizer = visualizer;
+        }
+
+        public async void UpdateSeed() {
+            Seed = new Random().Next();
+            await UpdateCanvasSize();
+        }
+
+        public async Task UpdateCanvasSize() {
+            await Task.Run(() => {
+                while (Waiting) {
+                    Waiting = false;
+                    Thread.Sleep(250);
+                }
+            });
+
+            CanvasHeight = (int)OutputCanvas.ActualHeight;
+            CanvasWidth = (int)OutputCanvas.ActualWidth;
+
+            var canvasArea = new Polygon(new Point(0, 0), new Point(0, CanvasHeight), new Point(CanvasWidth, CanvasHeight), new Point(CanvasWidth, 0));
+            Generator.SetBorder(canvasArea);
+
+            Log.LogInformation(nameof(UpdateCanvasSize));
         }
 
         public void GenerateAndDraw() {
@@ -98,22 +126,11 @@ namespace Nrrdio.MapGenerator.Services {
             }
 
             OutputCanvas.Children.Add(trianglePath);
-            //OutputCanvas.Children.Add(voronoiPath);
+            OutputCanvas.Children.Add(voronoiPath);
 
             stopwatch.Stop();
+
             Log.LogInformation($"Canvas duration: {stopwatch.ElapsedMilliseconds / 1000f} sec");
-        }
-
-        public async Task UpdateCanvasSize() {
-            await Task.Run(() => {
-                while (Waiting) {
-                    Waiting = false;
-                    Thread.Sleep(250);
-                }
-            });
-
-            CanvasHeight = (int)OutputCanvas.ActualHeight;
-            CanvasWidth = (int)OutputCanvas.ActualWidth;
         }
 
         public void OnDrawButtonClick(object sender, RoutedEventArgs e) {
@@ -126,20 +143,6 @@ namespace Nrrdio.MapGenerator.Services {
             if (SizeChangedTask is null || SizeChangedTask.IsCompleted) {
                 SizeChangedTask = UpdateCanvasSize();
             }
-        }
-
-        public void OnWindowLoaded(object sender, RoutedEventArgs e) {
-            Seed = new Random().Next();
-
-            OnPropertyChanged(nameof(Seed));
-
-            CanvasHeight = (int)OutputCanvas.ActualHeight;
-            CanvasWidth = (int)OutputCanvas.ActualWidth;
-
-            var canvasArea = new Polygon(new Point(0, 0), new Point(0, CanvasHeight), new Point(CanvasWidth, CanvasHeight), new Point(CanvasWidth, 0));
-
-            Generator = new Generator(canvasArea);
-            Visualizer = new Visualizer();
         }
 
         public void OnPropertyChanged(string propertyName) {

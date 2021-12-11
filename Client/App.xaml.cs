@@ -2,11 +2,10 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Toolkit.Mvvm.DependencyInjection;
 using Microsoft.UI.Xaml;
+using Nrrdio.MapGenerator.Services;
 using Nrrdio.Utilities.Loggers;
 using Nrrdio.Utilities.WinUI;
 using System;
-using System.Runtime.InteropServices;
-using Windows.ApplicationModel;
 using WinRT;
 
 namespace Nrrdio.MapGenerator.Client {
@@ -21,6 +20,9 @@ namespace Nrrdio.MapGenerator.Client {
             Ioc.Default.ConfigureServices(
                 new ServiceCollection()
                     .AddSingleton<ILoggerProvider, HandlerLoggerProvider>()
+                    .AddScoped<MainPageViewModel>()
+                    .AddScoped<Generator>()
+                    .AddScoped<Visualizer>()
                     .AddLogging()
                 .BuildServiceProvider());
 
@@ -36,7 +38,7 @@ namespace Nrrdio.MapGenerator.Client {
             mainWindow.Title = "Map Generator";
             mainWindow.Activate();
 
-            SetWindowSize(WindowHandle, 800, 600);
+            SetWindowSize(WindowHandle, 1024, 768);
         }
 
         // https://github.com/microsoft/WinUI-3-Demos/blob/420c48fe1613cb20b38000252369a0c556543eac/src/Build2020Demo/DemoBuildCs/DemoBuildCs/DemoBuildCs/App.xaml.cs#L41
