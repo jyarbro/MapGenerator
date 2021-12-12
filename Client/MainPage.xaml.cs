@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Nrrdio.MapGenerator.Services;
 using Nrrdio.Utilities.Loggers;
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,7 +18,7 @@ namespace Nrrdio.MapGenerator.Client {
 
         public MainPage() {
             InitializeComponent();
-            
+
             Log = Ioc.Default.GetService<ILogger<MainPageViewModel>>();
             HandlerLoggerProvider.Instances[typeof(MainPageViewModel).FullName].EntryAddedEvent += OnAppendLogText;
 
@@ -27,18 +28,14 @@ namespace Nrrdio.MapGenerator.Client {
             DataContext = ViewModel;
         }
 
-        void Redraw() {
+        async Task Redraw() {
             if (Drawing) {
                 return;
             }
 
             Drawing = true;
-
             Log.LogInformation($"{nameof(Redraw)}");
-
-            OutputCanvas.Children.Clear();
-            ViewModel.GenerateAndDraw();
-
+            await ViewModel.GenerateAndDraw();
             Drawing = false;
         }
 
@@ -46,27 +43,37 @@ namespace Nrrdio.MapGenerator.Client {
             LogText.Text = $"{DateTime.Now:HH:mm:ss:ff}: {e.LogEntry.Message}\n{LogText.Text}";
         }
 
-        void OnPageLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
-            Log.LogInformation($"Event: {nameof(OnPageLoaded)}");
-            Redraw();
+        async void OnPageLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+            Log.LogTrace($"Event: {nameof(OnPageLoaded)}");
+
+            try { 
+                await Redraw();
+            }
+            catch (COMException exception) when (exception.Message.Contains("The object has been closed.")) { }
         }
 
-        void OnRedrawButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
-            Log.LogInformation($"Event: {nameof(OnRedrawButtonClick)}");
-            Redraw();
+        async void OnRedrawButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+            Log.LogTrace($"Event: {nameof(OnRedrawButtonClick)}");
+
+            try {
+                await Redraw();
+            }
+            catch (COMException exception) when (exception.Message.Contains("The object has been closed.")) { }
         }
 
         async void OnSizeChanged(object sender, Microsoft.UI.Xaml.SizeChangedEventArgs e) {
-            Resizing++;
+            Log.LogTrace($"Event: {nameof(OnSizeChanged)}");
 
-            await Task.Run(() => {
-                Thread.Sleep(250);
-                Resizing--;
-            });
+            Resizing++;
+            await Task.Delay(250);
+            Resizing--;
 
             if (Resizing == 0) {
-                Redraw();
+                try {
+                    await Redraw();
+                }
+                catch (COMException exception) when (exception.Message.Contains("The object has been closed.")) { }
             }
         }
-            }
+    }
 }

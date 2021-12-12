@@ -8,49 +8,6 @@ namespace Nrrdio.MapGenerator.Services {
     public class Generator {
         public Polygon Border { get; set; }
 
-        public void SetBorder(Polygon border) {
-            if (!border.IsConvex()) {
-                throw new ArgumentException("Border polygon must be convex because I'm too lazy to program around complex polys.");
-            }
-
-            Border = border;
-        }
-
-        public List<Point> Points(int amount, int seed) {
-            var random = new Random(seed);
-            var points = new List<Point>();
-
-            points.AddRange(Border.Vertices);
-
-            double pointX;
-            double pointY;
-
-            var minX = Border.Vertices.Min(o => o.X);
-            var minY = Border.Vertices.Min(o => o.Y);
-            var maxX = Border.Vertices.Max(o => o.X);
-            var maxY = Border.Vertices.Max(o => o.Y);
-
-            var rangeX = maxX - minX;
-            var rangeY = maxY - minY;
-
-            var i = 0;
-
-            while (i < amount) {
-                pointX = minX + random.NextDouble() * rangeX;
-                pointY = minY + random.NextDouble() * rangeY;
-
-                var point = new Point(pointX, pointY);
-
-                if (Border.Contains(point)) {
-                    points.Add(point);
-                }
-
-                i++;
-            }
-
-            return points;
-        }
-
         // https://www.codeguru.com/cplusplus/delaunay-triangles/
         public IEnumerable<Polygon> DelaunayTriangles(IEnumerable<Point> points) {
             var borderVertices = Border.Vertices.Count;
