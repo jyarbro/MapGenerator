@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Toolkit.Mvvm.DependencyInjection;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -7,13 +6,11 @@ using Nrrdio.Utilities.Maths;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Nrrdio.MapGenerator.Services {
     public class MainPageViewModel {
         public event PropertyChangedEventHandler PropertyChanged;
-        
+
         public int Seed {
             get => seed;
             set {
@@ -23,7 +20,7 @@ namespace Nrrdio.MapGenerator.Services {
                 }
             }
         }
-        int seed;
+        int seed = new Random().Next();
 
         public int PointCount {
             get => pointCount;
@@ -34,9 +31,7 @@ namespace Nrrdio.MapGenerator.Services {
                 }
             }
         }
-        int pointCount = 15;
-
-        public Canvas OutputCanvas { get; set; }
+        int pointCount = 200;
 
         public int CanvasWidth {
             get => canvasWidth;
@@ -63,8 +58,7 @@ namespace Nrrdio.MapGenerator.Services {
         ILogger<MainPageViewModel> Log { get; }
         Generator Generator { get; }
         Visualizer Visualizer { get; }
-        Task SizeChangedTask { get; set; }
-        bool Waiting { get; set; }
+        Canvas OutputCanvas { get; set; }
 
         public MainPageViewModel(
             ILogger<MainPageViewModel> log,
@@ -76,18 +70,8 @@ namespace Nrrdio.MapGenerator.Services {
             Visualizer = visualizer;
         }
 
-        public async void UpdateSeed() {
-            Seed = new Random().Next();
-            await UpdateCanvasSize();
-        }
-
-        public async Task UpdateCanvasSize() {
-            await Task.Run(() => {
-                while (Waiting) {
-                    Waiting = false;
-                    Thread.Sleep(250);
-                }
-            });
+        public void UpdateCanvas(Canvas canvas) {
+            OutputCanvas = canvas;
 
             CanvasHeight = (int)OutputCanvas.ActualHeight;
             CanvasWidth = (int)OutputCanvas.ActualWidth;
@@ -95,7 +79,7 @@ namespace Nrrdio.MapGenerator.Services {
             var canvasArea = new Polygon(new Point(0, 0), new Point(0, CanvasHeight), new Point(CanvasWidth, CanvasHeight), new Point(CanvasWidth, 0));
             Generator.SetBorder(canvasArea);
 
-            Log.LogInformation(nameof(UpdateCanvasSize));
+            Log.LogInformation(nameof(UpdateCanvas));
         }
 
         public void GenerateAndDraw() {
@@ -121,12 +105,12 @@ namespace Nrrdio.MapGenerator.Services {
             Log.LogInformation($"Visualizer duration: {stopwatch.ElapsedMilliseconds / 1000f} sec");
             stopwatch.Restart();
 
+            OutputCanvas.Children.Add(trianglePath);
+            OutputCanvas.Children.Add(voronoiPath);
+
             foreach (var pointShape in pointShapes) {
                 OutputCanvas.Children.Add(pointShape);
             }
-
-            OutputCanvas.Children.Add(trianglePath);
-            OutputCanvas.Children.Add(voronoiPath);
 
             stopwatch.Stop();
 
@@ -137,16 +121,28 @@ namespace Nrrdio.MapGenerator.Services {
             GenerateAndDraw();
         }
 
-        public void OnWindowSizeChanged(object sender, SizeChangedEventArgs e) {
-            Waiting = true;
-
-            if (SizeChangedTask is null || SizeChangedTask.IsCompleted) {
-                SizeChangedTask = UpdateCanvasSize();
-            }
-        }
-
         public void OnPropertyChanged(string propertyName) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
+
+// Old resize handler with built in waiting until user is done.
+// Save until window resizing is implemented.
+
+//public void OnWindowSizeChanged(object sender, SizeChangedEventArgs e) {
+//    Waiting = true;
+//    if (SizeChangedTask is null || SizeChangedTask.IsCompleted) {
+//        SizeChangedTask = UpdateCanvasSize();
+//    }
+//}
+
+//await Task.Run(() => {
+//    while (Waiting) {
+//        Waiting = false;
+//        Thread.Sleep(250);
+//    }
+//}); 
+
+//Task SizeChangedTask { get; set; }
+//bool Waiting { get; set; }

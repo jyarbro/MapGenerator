@@ -14,16 +14,10 @@ namespace Nrrdio.MapGenerator.Client {
             InitializeComponent();
             
             Log = Ioc.Default.GetService<ILogger<MainPageViewModel>>();
-
-            var handlerLog = Log as HandlerLogger;
-
-            if (handlerLog is not null) {
-                handlerLog.EntryAddedEvent += MainPage_EntryAddedEvent;
-            }
+            HandlerLoggerProvider.Instances[typeof(MainPageViewModel).FullName].EntryAddedEvent += MainPage_EntryAddedEvent;
 
             ViewModel = Ioc.Default.GetService<MainPageViewModel>();
-            ViewModel.OutputCanvas = OutputCanvas;
-            ViewModel.UpdateSeed();
+            ViewModel.UpdateCanvas(OutputCanvas);
 
             DataContext = ViewModel;
         }
