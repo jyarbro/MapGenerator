@@ -22,8 +22,7 @@ namespace Nrrdio.MapGenerator.Client {
                     .AddSingleton<ILoggerProvider, HandlerLoggerProvider>()
                     .AddLogging()
                     .AddTransient<MainPageViewModel>()
-                    .AddTransient<Generator>()
-                    .AddTransient<Visualizer>()
+                    .AddTransient<DelaunayVoronoiGenerator>()
                 .BuildServiceProvider());
 
             InitializeComponent();

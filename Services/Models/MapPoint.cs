@@ -5,7 +5,7 @@ using Nrrdio.Utilities.Maths;
 using System.Collections.Generic;
 
 namespace Nrrdio.MapGenerator.Services.Models {
-    internal class MapPoint {
+    public class MapPoint {
         public Point ValueObject { get; }
         public double X => ValueObject.X;
         public double Y => ValueObject.Y;

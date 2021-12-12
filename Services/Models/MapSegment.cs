@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Media;
 using Nrrdio.Utilities.Maths;
 
 namespace Nrrdio.MapGenerator.Services.Models {
-    internal class MapSegment {
+    public class MapSegment {
         public Segment ValueObject { get; }
         public MapPoint Point1 { get; }
         public MapPoint Point2 { get; }

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Nrrdio.MapGenerator.Services.Models {
-    internal class MapPolygon {
+    public class MapPolygon {
         public Polygon ValueObject { get; }
         public IList<MapPoint> Vertices { get; }
         public ISet<MapSegment> Edges { get; } = new HashSet<MapSegment>();

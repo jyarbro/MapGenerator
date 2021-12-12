@@ -5,12 +5,11 @@ using Nrrdio.MapGenerator.Services;
 using Nrrdio.Utilities.Loggers;
 using System;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Nrrdio.MapGenerator.Client {
     public sealed partial class MainPage : Page {
-        ILogger<MainPageViewModel> Log { get; }
+        ILogger<MainPage> Log { get; }
         MainPageViewModel ViewModel { get; }
 
         int Resizing { get; set; }
@@ -19,8 +18,11 @@ namespace Nrrdio.MapGenerator.Client {
         public MainPage() {
             InitializeComponent();
 
-            Log = Ioc.Default.GetService<ILogger<MainPageViewModel>>();
-            HandlerLoggerProvider.Instances[typeof(MainPageViewModel).FullName].EntryAddedEvent += OnAppendLogText;
+            Log = Ioc.Default.GetService<ILogger<MainPage>>();
+
+            foreach (var logger in HandlerLoggerProvider.Instances) {
+                logger.Value.EntryAddedEvent += OnAppendLogText;
+            }
 
             ViewModel = Ioc.Default.GetService<MainPageViewModel>();
             ViewModel.SetCanvas(OutputCanvas);
@@ -35,7 +37,7 @@ namespace Nrrdio.MapGenerator.Client {
 
             Drawing = true;
             Log.LogInformation($"{nameof(Redraw)}");
-            await ViewModel.GenerateAndDraw();
+            await ViewModel.Start();
             Drawing = false;
         }
 
@@ -49,7 +51,7 @@ namespace Nrrdio.MapGenerator.Client {
         async void OnPageLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
             Log.LogTrace($"Event: {nameof(OnPageLoaded)}");
 
-            try { 
+            try {
                 await Redraw();
             }
             catch (COMException exception) when (exception.Message.Contains("The object has been closed.")) { }
@@ -81,8 +83,7 @@ namespace Nrrdio.MapGenerator.Client {
 
         void OnContinueButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
             Log.LogTrace($"Event: {nameof(OnContinueButtonClick)}");
-
-            ViewModel.Continue = true;
+            ViewModel.Continue();
         }
     }
 }
