@@ -147,7 +147,6 @@ namespace Nrrdio.MapGenerator.Services {
             int j;
 
             var centroid = new MapPoint(Border.ValueObject.Centroid);
-            await AddPoint(centroid);
 
             for (var i = 0; i < borderVertices; i++) {
                 j = (i + 1) % borderVertices;
