@@ -116,7 +116,7 @@ namespace Nrrdio.MapGenerator.Services {
         }
 
         public IEnumerable<Segment> VoronoiEdges(IEnumerable<Polygon> triangles) {
-            var voronoiEdges = new HashSet<Segment>();
+            var voronoiEdges = new List<Segment>();
 
             foreach (var triangle in triangles) {
                 foreach (var edge in triangle.Edges) {
