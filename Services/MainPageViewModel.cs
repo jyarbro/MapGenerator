@@ -112,7 +112,7 @@ namespace Nrrdio.MapGenerator.Services {
         }
 
         async Task AddPoints() {
-            Log.LogTrace(nameof(AddPoints));
+            Log.LogInformation("Adding points");
 
             var random = new Random(seed);
 
@@ -141,7 +141,7 @@ namespace Nrrdio.MapGenerator.Services {
         }
 
         async Task AddBorderTriangles() {
-            Log.LogTrace(nameof(AddBorderTriangles));
+            Log.LogInformation("Adding border triangles");
 
             var borderVertices = Border.Vertices.Count;
             int j;
@@ -158,7 +158,7 @@ namespace Nrrdio.MapGenerator.Services {
 
         // https://www.codeguru.com/cplusplus/delaunay-triangles/
         async Task AddDelaunayTriangles() {
-            Log.LogTrace(nameof(AddDelaunayTriangles));
+            Log.LogInformation("Adding delaunay triangles");
 
             foreach (var point in MapPoints) {
                 var originalPointSize = point.CanvasPoint.Width;
