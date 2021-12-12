@@ -20,10 +20,10 @@ namespace Nrrdio.MapGenerator.Client {
             Ioc.Default.ConfigureServices(
                 new ServiceCollection()
                     .AddSingleton<ILoggerProvider, HandlerLoggerProvider>()
-                    .AddScoped<MainPageViewModel>()
-                    .AddScoped<Generator>()
-                    .AddScoped<Visualizer>()
                     .AddLogging()
+                    .AddTransient<MainPageViewModel>()
+                    .AddTransient<Generator>()
+                    .AddTransient<Visualizer>()
                 .BuildServiceProvider());
 
             InitializeComponent();
