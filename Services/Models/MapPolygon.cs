@@ -9,7 +9,7 @@ namespace Nrrdio.MapGenerator.Services.Models {
     internal class MapPolygon {
         public Polygon ValueObject { get; }
         public IList<MapPoint> Vertices { get; }
-        public ISet<MapSegment> Edges { get; }
+        public ISet<MapSegment> Edges { get; } = new HashSet<MapSegment>();
         public Microsoft.UI.Xaml.Shapes.Path CanvasPolygon { get; }
         public Microsoft.UI.Xaml.Shapes.Ellipse CanvasCircumCircle { get; }
 
@@ -25,11 +25,10 @@ namespace Nrrdio.MapGenerator.Services.Models {
                 vertex.AdjacentPolygons.Add(this);
             }
 
-            Edges = new HashSet<MapSegment> {
-                new MapSegment(Vertices[0], Vertices[1]),
-                new MapSegment(Vertices[1], Vertices[2]),
-                new MapSegment(Vertices[2], Vertices[0])
-            };
+            for (int i = 0; i < _VertexCount; i++) {
+                var j = (i + 1) % _VertexCount;
+                Edges.Add(new MapSegment(Vertices[i], Vertices[j]));
+            }
 
             CanvasPolygon = new Microsoft.UI.Xaml.Shapes.Path {
                 Stroke = new SolidColorBrush(Colors.LightSteelBlue),
@@ -61,13 +60,14 @@ namespace Nrrdio.MapGenerator.Services.Models {
             CanvasPolygon.Data = geometryGroup;
 
             CanvasCircumCircle = new Microsoft.UI.Xaml.Shapes.Ellipse {
-                Stroke = new SolidColorBrush(Colors.Azure),
+                Visibility = Visibility.Collapsed,
+                Stroke = new SolidColorBrush(Colors.Blue),
                 StrokeThickness = 1,
                 Width = ValueObject.Circumcircle.Radius * 2,
                 Height = ValueObject.Circumcircle.Radius * 2,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(ValueObject.Circumcircle.Center.X - ValueObject.Circumcircle.Center.X * 0.5, ValueObject.Circumcircle.Center.Y - ValueObject.Circumcircle.Center.Y * 0.5, 0, 0),
+                Margin = new Thickness(ValueObject.Circumcircle.Center.X - ValueObject.Circumcircle.Radius, ValueObject.Circumcircle.Center.Y - ValueObject.Circumcircle.Radius, 0, 0),
             };
         }
 

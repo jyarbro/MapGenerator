@@ -16,8 +16,6 @@ namespace Nrrdio.MapGenerator.Services {
     public class MainPageViewModel {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public int Throttle { get; set; } = 50;
-
         public int Seed {
             get => seed;
             set {
@@ -155,7 +153,7 @@ namespace Nrrdio.MapGenerator.Services {
         public async Task AddDelaunayTriangles() {
             Log.LogTrace(nameof(AddDelaunayTriangles));
             
-            var borderVertices = Border.Vertices.Count();
+            var borderVertices = Border.Vertices.Count;
             int j;
 
             var centroid = new MapPoint(Border.ValueObject.Centroid);
@@ -192,13 +190,13 @@ namespace Nrrdio.MapGenerator.Services {
         }
 
         async Task AddPoint(MapPoint point) {
-            await Task.Delay(Throttle);
+            await Task.Delay(10);
             MapPoints.Add(point);
             OutputCanvas.Children.Add(point.CanvasPoint);
         }
 
         async Task AddPolygon(MapPolygon polygon) {
-            await Task.Delay(Throttle);
+            await Task.Delay(500);
             MapPolygons.Add(polygon);
             OutputCanvas.Children.Add(polygon.CanvasCircumCircle);
             OutputCanvas.Children.Add(polygon.CanvasPolygon);
