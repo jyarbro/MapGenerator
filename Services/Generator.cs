@@ -65,11 +65,9 @@ namespace Nrrdio.MapGenerator.Services {
                 triangles.Add(triangle);
             }
 
-            Debug.Assert(triangles.Count == 4);
-
             foreach (var point in points) {
                 var badTriangles = findBadTriangles(point, triangles);
-                var polygon = findHoleBoundaries(badTriangles);
+                var boundaries = findHoleBoundaries(badTriangles);
 
                 foreach (var badTriangle in badTriangles) {
                     foreach (var vertex in badTriangle.Vertices) {
@@ -79,7 +77,7 @@ namespace Nrrdio.MapGenerator.Services {
 
                 triangles.RemoveWhere(badTriangles.Contains);
 
-                foreach (var edge in polygon.Where(possibleEdge => possibleEdge.Point1 != point && possibleEdge.Point2 != point)) {
+                foreach (var edge in boundaries.Where(possibleEdge => !possibleEdge.Contains(point))) {
                     var triangle = new Polygon(point, edge.Point1, edge.Point2);
                     triangles.Add(triangle);
                 }
