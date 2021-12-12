@@ -70,55 +70,48 @@ namespace Nrrdio.MapGenerator.Services {
             Visualizer = visualizer;
         }
 
-        public void UpdateCanvas(Canvas canvas) {
+        public void SetCanvas(Canvas canvas) {
+            Log.LogInformation($"{nameof(SetCanvas)}: Canvas linked and border defined.");
+            
             OutputCanvas = canvas;
 
             CanvasHeight = (int)OutputCanvas.ActualHeight;
             CanvasWidth = (int)OutputCanvas.ActualWidth;
 
-            var canvasArea = new Polygon(new Point(0, 0), new Point(0, CanvasHeight), new Point(CanvasWidth, CanvasHeight), new Point(CanvasWidth, 0));
-            Generator.SetBorder(canvasArea);
-
-            Log.LogInformation(nameof(UpdateCanvas));
+            Generator.SetBorder(new Polygon(new Point(0, 0),
+                                            new Point(0, CanvasHeight),
+                                            new Point(CanvasWidth, CanvasHeight),
+                                            new Point(CanvasWidth, 0)));
         }
 
         public void GenerateAndDraw() {
-            OutputCanvas.Children.Clear();
-
             var stopwatch = new Stopwatch();
-            stopwatch.Start();
 
+            stopwatch.Restart();
             var points = Generator.Points(PointCount, Seed);
             var triangles = Generator.DelaunayTriangles(points);
             var triangleEdges = Generator.TriangleEdges(triangles);
             var voronoiEdges = Generator.VoronoiEdges(triangles);
-
             stopwatch.Stop();
-            Log.LogInformation($"Generator duration: {stopwatch.ElapsedMilliseconds / 1000f} sec");
+            Log.LogInformation($"Generator: {stopwatch.ElapsedMilliseconds / 1000f} sec");
+            
             stopwatch.Restart();
-
             var trianglePath = Visualizer.GetPath(triangleEdges, 1, Colors.LightSteelBlue);
             var voronoiPath = Visualizer.GetPath(voronoiEdges, 2, Colors.DarkViolet);
             var pointShapes = Visualizer.GetPointShapes(points, 3, Colors.Red);
 
             stopwatch.Stop();
-            Log.LogInformation($"Visualizer duration: {stopwatch.ElapsedMilliseconds / 1000f} sec");
+            Log.LogInformation($"Visualizer: {stopwatch.ElapsedMilliseconds / 1000f} sec");
+            
             stopwatch.Restart();
-
             OutputCanvas.Children.Add(trianglePath);
             OutputCanvas.Children.Add(voronoiPath);
 
             foreach (var pointShape in pointShapes) {
                 OutputCanvas.Children.Add(pointShape);
             }
-
             stopwatch.Stop();
-
-            Log.LogInformation($"Canvas duration: {stopwatch.ElapsedMilliseconds / 1000f} sec");
-        }
-
-        public void OnDrawButtonClick(object sender, RoutedEventArgs e) {
-            GenerateAndDraw();
+            Log.LogInformation($"Draw to canvas: {stopwatch.ElapsedMilliseconds / 1000f} sec");
         }
 
         public void OnPropertyChanged(string propertyName) {
@@ -126,23 +119,3 @@ namespace Nrrdio.MapGenerator.Services {
         }
     }
 }
-
-// Old resize handler with built in waiting until user is done.
-// Save until window resizing is implemented.
-
-//public void OnWindowSizeChanged(object sender, SizeChangedEventArgs e) {
-//    Waiting = true;
-//    if (SizeChangedTask is null || SizeChangedTask.IsCompleted) {
-//        SizeChangedTask = UpdateCanvasSize();
-//    }
-//}
-
-//await Task.Run(() => {
-//    while (Waiting) {
-//        Waiting = false;
-//        Thread.Sleep(250);
-//    }
-//}); 
-
-//Task SizeChangedTask { get; set; }
-//bool Waiting { get; set; }
