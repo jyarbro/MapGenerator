@@ -24,5 +24,11 @@ namespace Nrrdio.MapGenerator.Services.Models {
                 }
             };
         }
+
+        public override bool Equals(object obj) => (obj is MapSegment other) && Equals(other);
+        public bool Equals(MapSegment other) => ValueObject.Equals(other.ValueObject);
+        public static bool Equals(MapSegment left, MapSegment right) => left.Equals(right);
+        public override int GetHashCode() => ValueObject.GetHashCode();
+
     }
 }

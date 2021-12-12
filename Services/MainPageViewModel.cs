@@ -16,6 +16,8 @@ namespace Nrrdio.MapGenerator.Services {
     public class MainPageViewModel {
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public bool Continue { get; set; }
+
         public int Seed {
             get => seed;
             set {
@@ -36,7 +38,7 @@ namespace Nrrdio.MapGenerator.Services {
                 }
             }
         }
-        int pointCount = 200;
+        int pointCount = 50;
 
         public int CanvasWidth {
             get => canvasWidth;
@@ -100,13 +102,8 @@ namespace Nrrdio.MapGenerator.Services {
                                     new MapPoint(CanvasWidth, CanvasHeight),
                                     new MapPoint(CanvasWidth, 0));
 
-            await AddPoint(Border.Vertices[0]);
-            await AddPoint(Border.Vertices[1]);
-            await AddPoint(Border.Vertices[2]);
-            await AddPoint(Border.Vertices[3]);
-            await AddPolygon(Border);
-
             await AddPoints();
+            await AddBorderTriangles();
             await AddDelaunayTriangles();
 
             //var triangleEdges = Generator.TriangleEdges(triangles);
@@ -150,8 +147,8 @@ namespace Nrrdio.MapGenerator.Services {
             }
         }
 
-        public async Task AddDelaunayTriangles() {
-            Log.LogTrace(nameof(AddDelaunayTriangles));
+        public async Task AddBorderTriangles() {
+            Log.LogTrace(nameof(AddBorderTriangles));
             
             var borderVertices = Border.Vertices.Count;
             int j;
@@ -165,45 +162,98 @@ namespace Nrrdio.MapGenerator.Services {
                 var triangle = new MapPolygon(centroid, Border.Vertices[i], Border.Vertices[j]);
                 await AddPolygon(triangle);
             }
+        }
 
+        public async Task AddDelaunayTriangles() {
+            Log.LogTrace(nameof(AddDelaunayTriangles));
+            
             foreach (var point in MapPoints) {
-                var badTriangles = MapPolygons.Where(o => o.ValueObject.Circumcircle.Contains(point.ValueObject));
+                var originalPointSize = point.CanvasPoint.Width;
+
+                point.CanvasPoint.Width = 10;
+                point.CanvasPoint.Height = 10;
+
+                var badTriangles = MapPolygons.Where(o => o.ValueObject.Circumcircle.Contains(point.ValueObject)).ToList();
 
                 var holeBoundaries = badTriangles.SelectMany(t => t.Edges)
                                                  .GroupBy(o => o)
                                                  .Where(o => o.Count() == 1)
-                                                 .Select(o => o.First());
+                                                 .Select(o => o.First())
+                                                 .ToList();
 
-                foreach (var badTriangle in badTriangles) {
-                    foreach (var vertex in badTriangle.Vertices) {
-                        vertex.AdjacentPolygons.Remove(badTriangle);
-                    }
+                var geometryGroup = new GeometryGroup();
+
+                foreach (var segment in holeBoundaries) {
+                    geometryGroup.Children.Add(segment.CanvasObject);
                 }
 
-                MapPolygons.RemoveWhere(badTriangles.Contains);
+                var path = new Microsoft.UI.Xaml.Shapes.Path {
+                    Stroke = new SolidColorBrush(Colors.Blue),
+                    StrokeThickness = 3
+                };
+
+                path.Data = geometryGroup;
+
+                OutputCanvas.Children.Add(path);
+
+                //await WaitForContinue();
+                await Task.Delay(10);
 
                 foreach (var edge in holeBoundaries.Where(possibleEdge => !possibleEdge.ValueObject.Contains(point.ValueObject))) {
                     var triangle = new MapPolygon(point, edge.Point1, edge.Point2);
                     await AddPolygon(triangle);
                 }
+
+                foreach (var polygon in badTriangles) {
+                    await RemovePolygon(polygon);
+                }
+
+                point.CanvasPoint.Width = originalPointSize;
+                point.CanvasPoint.Height = originalPointSize;
+                OutputCanvas.Children.Remove(path);
+
+                //await WaitForContinue();
+                await Task.Delay(50);
             }
         }
 
         async Task AddPoint(MapPoint point) {
-            await Task.Delay(10);
+            await Task.Delay(1);
             MapPoints.Add(point);
             OutputCanvas.Children.Add(point.CanvasPoint);
         }
 
         async Task AddPolygon(MapPolygon polygon) {
-            await Task.Delay(500);
+            await Task.Delay(3);
             MapPolygons.Add(polygon);
             OutputCanvas.Children.Add(polygon.CanvasCircumCircle);
             OutputCanvas.Children.Add(polygon.CanvasPolygon);
         }
 
+        async Task RemovePolygon(MapPolygon polygon) {
+            await Task.Delay(1);
+            
+            foreach (var vertex in polygon.Vertices) {
+                vertex.AdjacentPolygons.Remove(polygon);
+            }
+
+            OutputCanvas.Children.Remove(polygon.CanvasPolygon);
+            OutputCanvas.Children.Remove(polygon.CanvasCircumCircle);
+            MapPolygons.Remove(polygon);
+        }
+
         public void OnPropertyChanged(string propertyName) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        async Task WaitForContinue() {
+            Continue = false;
+
+            await Task.Run(() => {
+                while (!Continue) {
+                    Thread.Sleep(10);
+                }
+            });
         }
     }
 }

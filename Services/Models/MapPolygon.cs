@@ -61,7 +61,7 @@ namespace Nrrdio.MapGenerator.Services.Models {
 
             CanvasCircumCircle = new Microsoft.UI.Xaml.Shapes.Ellipse {
                 Visibility = Visibility.Collapsed,
-                Stroke = new SolidColorBrush(Colors.Blue),
+                Stroke = new SolidColorBrush(Colors.DarkGray),
                 StrokeThickness = 1,
                 Width = ValueObject.Circumcircle.Radius * 2,
                 Height = ValueObject.Circumcircle.Radius * 2,
@@ -72,18 +72,8 @@ namespace Nrrdio.MapGenerator.Services.Models {
         }
 
         public override bool Equals(object obj) => (obj is MapPolygon other) && Equals(other);
-        public bool Equals(MapPolygon other) => ValueObject == other.ValueObject;
+        public bool Equals(MapPolygon other) => ValueObject.Equals(other.ValueObject);
         public static bool Equals(MapPolygon left, MapPolygon right) => left.Equals(right);
-
-        public override int GetHashCode() {
-            var hashCode = Vertices[0].GetHashCode();
-
-            for (var i = 1; i < _VertexCount; i++) {
-                hashCode ^= Vertices[i].GetHashCode();
-            }
-
-            return hashCode;
-        }
-
+        public override int GetHashCode() => ValueObject.GetHashCode();
     }
 }

@@ -40,22 +40,16 @@ namespace Nrrdio.MapGenerator.Client {
         }
 
         void OnAppendLogText(object sender, LogEntryEventArgs e) {
-            LogText.Text = $"{DateTime.Now:HH:mm:ss:ff}: {e.LogEntry.Message}\n{LogText.Text}";
+            try {
+                LogText.Text = $"{DateTime.Now:HH:mm:ss:ff}: {e.LogEntry.Message}\n{LogText.Text}";
+            }
+            catch (COMException) { }
         }
 
         async void OnPageLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
             Log.LogTrace($"Event: {nameof(OnPageLoaded)}");
 
             try { 
-                await Redraw();
-            }
-            catch (COMException exception) when (exception.Message.Contains("The object has been closed.")) { }
-        }
-
-        async void OnRedrawButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
-            Log.LogTrace($"Event: {nameof(OnRedrawButtonClick)}");
-
-            try {
                 await Redraw();
             }
             catch (COMException exception) when (exception.Message.Contains("The object has been closed.")) { }
@@ -74,6 +68,21 @@ namespace Nrrdio.MapGenerator.Client {
                 }
                 catch (COMException exception) when (exception.Message.Contains("The object has been closed.")) { }
             }
+        }
+
+        async void OnRedrawButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+            Log.LogTrace($"Event: {nameof(OnRedrawButtonClick)}");
+
+            try {
+                await Redraw();
+            }
+            catch (COMException exception) when (exception.Message.Contains("The object has been closed.")) { }
+        }
+
+        void OnContinueButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+            Log.LogTrace($"Event: {nameof(OnContinueButtonClick)}");
+
+            ViewModel.Continue = true;
         }
     }
 }
