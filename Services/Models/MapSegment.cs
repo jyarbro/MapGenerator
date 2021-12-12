@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml.Media;
+﻿using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
 using Nrrdio.Utilities.Maths;
 
 namespace Nrrdio.MapGenerator.Services.Models {
@@ -6,14 +7,15 @@ namespace Nrrdio.MapGenerator.Services.Models {
         public Segment ValueObject { get; }
         public MapPoint Point1 { get; }
         public MapPoint Point2 { get; }
-        public LineGeometry CanvasObject { get; }
+        public LineGeometry CanvasGeometry { get; }
+        public Microsoft.UI.Xaml.Shapes.Path CanvasPath { get; }
 
         public MapSegment(MapPoint point1, MapPoint point2) {
             Point1 = point1;
             Point2 = point2;
             ValueObject = new Segment(Point1.ValueObject, Point2.ValueObject);
 
-            CanvasObject = new LineGeometry {
+            CanvasGeometry = new LineGeometry {
                 StartPoint = new Windows.Foundation.Point {
                     X = Point1.X,
                     Y = Point1.Y
@@ -22,6 +24,15 @@ namespace Nrrdio.MapGenerator.Services.Models {
                     X = Point2.X,
                     Y = Point2.Y
                 }
+            };
+
+            var geometryGroup = new GeometryGroup();
+            geometryGroup.Children.Add(CanvasGeometry);
+
+            CanvasPath = new Microsoft.UI.Xaml.Shapes.Path {
+                Stroke = new SolidColorBrush(Colors.Blue),
+                StrokeThickness = 3,
+                Data = geometryGroup
             };
         }
 
