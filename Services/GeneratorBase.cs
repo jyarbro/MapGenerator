@@ -25,7 +25,7 @@ namespace Nrrdio.MapGenerator.Services {
         }
 
         protected async Task AddPoint(MapPoint point) {
-            await Task.Delay(1);
+            await Task.Delay(0);
 
             if (!MapPoints.Contains(point)) {
                 MapPoints.Add(point);
@@ -34,14 +34,14 @@ namespace Nrrdio.MapGenerator.Services {
         }
 
         protected async Task AddPolygon(MapPolygon polygon) {
-            await Task.Delay(1);
+            await Task.Delay(0);
             MapTriangles.Add(polygon);
             OutputCanvas.Children.Add(polygon.CanvasCircumCircle);
             OutputCanvas.Children.Add(polygon.CanvasPolygon);
         }
 
         protected async Task AddSegment(MapSegment segment) {
-            await Task.Delay(1);
+            await Task.Delay(0);
 
             if (!MapSegments.Contains(segment)) {
                 MapSegments.Add(segment);
@@ -50,10 +50,10 @@ namespace Nrrdio.MapGenerator.Services {
         }
 
         protected async Task RemovePolygon(MapPolygon polygon) {
-            await Task.Delay(1);
+            await Task.Delay(0);
 
-            foreach (var vertex in polygon.Vertices) {
-                vertex.AdjacentPolygons.Remove(polygon);
+            foreach (MapPoint vertex in polygon.Vertices) {
+                vertex.AdjacentMapPolygons.Remove(polygon);
             }
 
             OutputCanvas.Children.Remove(polygon.CanvasPolygon);
@@ -62,7 +62,7 @@ namespace Nrrdio.MapGenerator.Services {
         }
 
         protected async Task RemoveSegment(MapSegment segment) {
-            await Task.Delay(1);
+            await Task.Delay(0);
 
             OutputCanvas.Children.Remove(segment.CanvasPath);
         }

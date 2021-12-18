@@ -3,17 +3,13 @@ using Microsoft.UI.Xaml.Media;
 using Nrrdio.Utilities.Maths;
 
 namespace Nrrdio.MapGenerator.Services.Models {
-    public class MapSegment {
-        public Segment ValueObject { get; }
-        public MapPoint Point1 { get; }
-        public MapPoint Point2 { get; }
+    public class MapSegment : Segment {
         public LineGeometry CanvasGeometry { get; }
         public Microsoft.UI.Xaml.Shapes.Path CanvasPath { get; }
 
-        public MapSegment(MapPoint point1, MapPoint point2) {
-            Point1 = point1;
-            Point2 = point2;
-            ValueObject = new Segment(Point1.ValueObject, Point2.ValueObject);
+        public MapSegment(MapPoint point1, MapPoint point2) : base(point1, point2) {
+            point1.AdjacentMapSegments.Add(this);
+            point2.AdjacentMapSegments.Add(this);
 
             CanvasGeometry = new LineGeometry {
                 StartPoint = new Windows.Foundation.Point {
@@ -35,11 +31,5 @@ namespace Nrrdio.MapGenerator.Services.Models {
                 Data = geometryGroup
             };
         }
-
-        public override bool Equals(object obj) => (obj is MapSegment other) && Equals(other);
-        public bool Equals(MapSegment other) => ValueObject.Equals(other.ValueObject);
-        public static bool Equals(MapSegment left, MapSegment right) => left.Equals(right);
-        public override int GetHashCode() => ValueObject.GetHashCode();
-
     }
 }

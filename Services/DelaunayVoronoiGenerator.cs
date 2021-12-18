@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Media;
 using Nrrdio.MapGenerator.Services.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -34,6 +35,7 @@ namespace Nrrdio.MapGenerator.Services {
             await AddBorderTriangles();
             await AddDelaunayTriangles();
             await AddVoronoiEdges();
+            await RemoveTriangles();
         }
 
         async Task AddPoints() {
@@ -71,7 +73,7 @@ namespace Nrrdio.MapGenerator.Services {
             var borderVertices = Border.Vertices.Count;
             int j;
 
-            var centroid = new MapPoint(Border.ValueObject.Centroid);
+            var centroid = new MapPoint(Border.Centroid);
 
             for (var i = 0; i < borderVertices; i++) {
                 j = (i + 1) % borderVertices;
@@ -91,15 +93,16 @@ namespace Nrrdio.MapGenerator.Services {
                 point.CanvasPoint.Width = 10;
                 point.CanvasPoint.Height = 10;
 
-                var badTriangles = MapTriangles.Where(o => o.ValueObject.Circumcircle.Contains(point.ValueObject)).ToList();
+                var badTriangles = MapTriangles.Where(o => o.Circumcircle.Contains(point)).Cast<MapPolygon>().ToList();
 
+                // The inner shared edges will have a count > 1
                 var holeBoundaries = badTriangles.SelectMany(t => t.Edges)
                                                  .GroupBy(o => o)
                                                  .Where(o => o.Count() == 1)
                                                  .Select(o => o.First())
                                                  .ToList();
 
-                foreach (var edge in holeBoundaries.Where(possibleEdge => !possibleEdge.ValueObject.Contains(point.ValueObject))) {
+                foreach (var edge in holeBoundaries.Where(possibleEdge => !possibleEdge.Contains(point))) {
                     var triangle = new MapPolygon(point, edge.Point1, edge.Point2);
                     await AddPolygon(triangle);
                 }
@@ -126,9 +129,8 @@ namespace Nrrdio.MapGenerator.Services {
                 triangle.CanvasPolygon.Stroke = new SolidColorBrush(Colors.Red);
                 triangle.CanvasPolygon.StrokeThickness = 5;
 
-                foreach (var edge in triangle.Edges) {
+                foreach (MapSegment edge in triangle.Edges) {
                     await AddSegment(edge);
-                    //await WaitForContinue();
 
                     var neighbors = MapTriangles.Where(other => other.Edges.Contains(edge) && triangle != other);
 
@@ -137,19 +139,14 @@ namespace Nrrdio.MapGenerator.Services {
                         var neighborOriginalThickness = neighbor.CanvasPolygon.StrokeThickness;
                         neighbor.CanvasPolygon.Stroke = new SolidColorBrush(Colors.Blue);
                         neighbor.CanvasPolygon.StrokeThickness = 5;
-                        //await WaitForContinue();
 
-                        var point1 = new MapPoint(triangle.ValueObject.Centroid);
-                        var point2 = new MapPoint(neighbor.ValueObject.Centroid);
+                        var point1 = new MapPoint(triangle.Circumcircle.Center);
+                        var point2 = new MapPoint(neighbor.Circumcircle.Center);
 
                         await AddPoint(point1);
                         await AddPoint(point2);
 
-                        //await WaitForContinue();
-
                         await AddSegment(new MapSegment(point1, point2));
-
-                        //await WaitForContinue();
 
                         neighbor.CanvasPolygon.Stroke = neighborOriginalColor;
                         neighbor.CanvasPolygon.StrokeThickness = neighborOriginalThickness;
@@ -160,6 +157,12 @@ namespace Nrrdio.MapGenerator.Services {
 
                 triangle.CanvasPolygon.Stroke = triangleOriginalColor;
                 triangle.CanvasPolygon.StrokeThickness = triangleOriginalThickness;
+            }
+        }
+
+        async Task RemoveTriangles() {
+            foreach (var triangle in MapTriangles) {
+                await RemovePolygon(triangle);
             }
         }
     }

@@ -6,28 +6,22 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Nrrdio.MapGenerator.Services.Models {
-    public class MapPolygon {
-        public Polygon ValueObject { get; }
-        public IList<MapPoint> Vertices { get; }
-        public ISet<MapSegment> Edges { get; } = new HashSet<MapSegment>();
+    public class MapPolygon : Polygon {
         public Microsoft.UI.Xaml.Shapes.Path CanvasPolygon { get; }
         public Microsoft.UI.Xaml.Shapes.Ellipse CanvasCircumCircle { get; }
 
-        readonly int _VertexCount;
-
+        public MapPolygon(params Point[] points) : this(points.Cast<MapPoint>().ToList()) { }
         public MapPolygon(params MapPoint[] points) : this(points.ToList()) { }
-        public MapPolygon(IEnumerable<MapPoint> points) {
-            Vertices = points.ToList();
-            _VertexCount = Vertices.Count;
-            ValueObject = new Polygon(Vertices.Select(p => p.ValueObject));
-
-            foreach (var vertex in Vertices) {
-                vertex.AdjacentPolygons.Add(this);
+        public MapPolygon(IEnumerable<MapPoint> points) : base(points) {
+            foreach (MapPoint vertex in Vertices) {
+                vertex.AdjacentMapPolygons.Add(this);
             }
 
-            for (int i = 0; i < _VertexCount; i++) {
-                var j = (i + 1) % _VertexCount;
-                Edges.Add(new MapSegment(Vertices[i], Vertices[j]));
+            Edges.Clear();
+
+            for (int i = 0; i < VertexCount; i++) {
+                var j = (i + 1) % VertexCount;
+                Edges.Add(new MapSegment(Vertices[i] as MapPoint, Vertices[j] as MapPoint));
             }
 
             CanvasPolygon = new Microsoft.UI.Xaml.Shapes.Path {
@@ -63,17 +57,12 @@ namespace Nrrdio.MapGenerator.Services.Models {
                 Visibility = Visibility.Collapsed,
                 Stroke = new SolidColorBrush(Colors.DarkGray),
                 StrokeThickness = 1,
-                Width = ValueObject.Circumcircle.Radius * 2,
-                Height = ValueObject.Circumcircle.Radius * 2,
+                Width = Circumcircle.Radius * 2,
+                Height = Circumcircle.Radius * 2,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(ValueObject.Circumcircle.Center.X - ValueObject.Circumcircle.Radius, ValueObject.Circumcircle.Center.Y - ValueObject.Circumcircle.Radius, 0, 0),
+                Margin = new Thickness(Circumcircle.Center.X - Circumcircle.Radius, Circumcircle.Center.Y - Circumcircle.Radius, 0, 0),
             };
         }
-
-        public override bool Equals(object obj) => (obj is MapPolygon other) && Equals(other);
-        public bool Equals(MapPolygon other) => ValueObject.Equals(other.ValueObject);
-        public static bool Equals(MapPolygon left, MapPolygon right) => left.Equals(right);
-        public override int GetHashCode() => ValueObject.GetHashCode();
     }
 }

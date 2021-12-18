@@ -19,7 +19,7 @@ namespace Nrrdio.MapGenerator.Client {
         public App() {
             Ioc.Default.ConfigureServices(
                 new ServiceCollection()
-                    .AddSingleton<ILoggerProvider, HandlerLoggerProvider>()
+                    .AddSingleton<ILoggerProvider, HandlerLoggerProvider>(_ => new HandlerLoggerProvider { LogLevel = LogLevel.Trace })
                     .AddLogging()
                     .AddTransient<MainPageViewModel>()
                     .AddTransient<DelaunayVoronoiGenerator>()
