@@ -5,7 +5,6 @@ using Microsoft.UI.Xaml.Media;
 using Nrrdio.MapGenerator.Services.Models;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,7 +12,7 @@ namespace Nrrdio.MapGenerator.Services {
     public class DelaunayVoronoiGenerator : GeneratorBase {
         MapPolygon Border { get; set; }
         int PointCount { get; set; }
-        
+
         public DelaunayVoronoiGenerator(
             ILogger<GeneratorBase> log
         ) : base(log) { }
@@ -35,7 +34,10 @@ namespace Nrrdio.MapGenerator.Services {
             await AddBorderTriangles();
             await AddDelaunayTriangles();
             await AddVoronoiEdges();
+            await RemovePoints();
             await RemoveTriangles();
+            await ChopBorder();
+            await LloydsRelaxation();
         }
 
         async Task AddPoints() {
@@ -160,10 +162,93 @@ namespace Nrrdio.MapGenerator.Services {
             }
         }
 
+        async Task RemovePoints() {
+            foreach (var point in MapPoints) {
+                await RemovePoint(point);
+            }
+        }
+
         async Task RemoveTriangles() {
             foreach (var triangle in MapTriangles) {
                 await RemovePolygon(triangle);
             }
+        }
+
+        async Task ChopBorder() {
+            var externalSegments = MapSegments.Where(segment => !Border.Contains(segment.Point1) || !Border.Contains(segment.Point2)).ToList();
+
+            foreach (MapSegment borderEdge in Border.Edges) {
+                var borderPoints = new List<MapPoint> {
+                    (MapPoint) borderEdge.Point1,
+                    (MapPoint) borderEdge.Point2
+                };
+
+                borderEdge.CanvasPath.StrokeThickness = 5;
+                borderEdge.CanvasPath.Stroke = new SolidColorBrush(Colors.Black);
+
+                await AddSegment(borderEdge);
+
+                foreach (var segment in externalSegments) {
+                    Log.LogInformation($"{segment}");
+
+                    var origThickness = segment.CanvasPath.StrokeThickness;
+                    var origStroke = segment.CanvasPath.Stroke;
+                    segment.CanvasPath.StrokeThickness = 5;
+                    segment.CanvasPath.Stroke = new SolidColorBrush(Colors.Purple);
+
+                    var (intersects, intersection, intersectionEnd) = borderEdge.Intersects(segment);
+
+                    if (intersects && intersectionEnd is null) {
+                        await RemoveSegment(segment);
+
+                        var borderIntersect = new MapPoint(intersection);
+
+                        if (Border.Contains(segment.Point1)) {
+                            await AddSegment(new MapSegment((MapPoint) segment.Point1, borderIntersect));
+                        }
+                        else {
+                            await AddSegment(new MapSegment(borderIntersect, (MapPoint) segment.Point2));
+                        }
+
+                        borderPoints.Add(borderIntersect);
+                    }
+
+                    //await WaitForContinue();
+
+                    segment.CanvasPath.StrokeThickness = origThickness;
+                    segment.CanvasPath.Stroke = origStroke;
+                }
+
+                await RemoveSegment(borderEdge);
+
+                if (borderEdge.Point1.X == borderEdge.Point2.X) {
+                    borderPoints = borderPoints.OrderBy(p => p.Y).ToList();
+                }
+                else {
+                    borderPoints = borderPoints.OrderBy(p => p.X).ToList();
+                }
+
+                for (var i = 0; i < borderPoints.Count; i++) {
+                    var j = (i + 1) % borderPoints.Count;
+                    await AddSegment(new MapSegment(borderPoints[i], borderPoints[j]));
+                }
+            }
+
+            externalSegments = MapSegments.Where(segment => !Border.Contains(segment.Point1) || !Border.Contains(segment.Point2)).ToList();
+
+            foreach (var segment in externalSegments) {
+                await RemoveSegment(segment);
+            } 
+        }
+
+        async Task FindPolygons() {
+            // maybe add points to left[] and right[] then remove as iterating.or maybe add to l/ r as edges iterated.
+            await Task.Delay(0);
+        }
+
+        async Task LloydsRelaxation() {
+            // move poly centroid to circumcircle centroid? or maybe redraw everything off of circumcircles.
+            await Task.Delay(0);
         }
     }
 }
