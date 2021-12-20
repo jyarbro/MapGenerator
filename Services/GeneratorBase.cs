@@ -65,6 +65,14 @@ namespace Nrrdio.MapGenerator.Services {
             await Task.Delay(0);
 
             OutputCanvas.Children.Remove(segment.CanvasPath);
+            MapSegments.Remove(segment);
+        }
+
+        protected async Task RemovePoint(MapPoint point) {
+            await Task.Delay(0);
+
+            OutputCanvas.Children.Remove(point.CanvasPoint);
+            MapPoints.Remove(point);
         }
 
         protected async Task WaitForContinue() {
