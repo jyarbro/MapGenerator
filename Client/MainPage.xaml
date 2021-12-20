@@ -12,6 +12,7 @@
             <Button Click="OnRedrawButtonClick">Redraw</Button>
             <ScrollViewer VerticalScrollMode="Auto"
 			          VerticalScrollBarVisibility="Auto"
+                      Width="300"
                       MinHeight="50"
 			          MaxHeight="200">
                 <TextBlock x:Name="LogText"
