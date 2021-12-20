@@ -7,7 +7,7 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <StackPanel Orientation="Horizontal">
-        <StackPanel Width="300">
+        <StackPanel>
             <Button Click="OnContinueButtonClick">Continue</Button>
             <Button Click="OnRedrawButtonClick">Redraw</Button>
             <ScrollViewer VerticalScrollMode="Auto"

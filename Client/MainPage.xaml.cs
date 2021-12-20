@@ -20,14 +20,15 @@ namespace Nrrdio.MapGenerator.Client {
 
             Log = Ioc.Default.GetService<ILogger<MainPage>>();
 
-            foreach (var logger in HandlerLoggerProvider.Instances) {
-                logger.Value.EntryAddedEvent += OnAppendLogText;
-            }
-
             ViewModel = Ioc.Default.GetService<MainPageViewModel>();
             ViewModel.SetCanvas(OutputCanvas);
 
             DataContext = ViewModel;
+
+            // Register this last.
+            foreach (var logger in HandlerLoggerProvider.Instances) {
+                logger.Value.EntryAddedEvent += OnAppendLogText;
+            }
         }
 
         async Task Redraw() {
