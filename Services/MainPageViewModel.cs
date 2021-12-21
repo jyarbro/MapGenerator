@@ -35,7 +35,7 @@ namespace Nrrdio.MapGenerator.Services {
                                         new MapPoint(CanvasWidth, CanvasHeight),
                                         new MapPoint(CanvasWidth, 0));
 
-            await DelaunayVoronoiGenerator.Generate(10, border, OutputCanvas);
+            await DelaunayVoronoiGenerator.Generate(30, border, OutputCanvas);
         }
 
         public void Continue() => DelaunayVoronoiGenerator.Continue = true;

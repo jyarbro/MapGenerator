@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
 using Nrrdio.MapGenerator.Services.Models;
+using Nrrdio.Utilities.Maths;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,7 +15,7 @@ namespace Nrrdio.MapGenerator.Services {
         protected ILogger<GeneratorBase> Log { get; }
         protected HashSet<MapPoint> MapPoints { get; } = new();
         protected HashSet<MapSegment> MapSegments { get; } = new();
-        protected HashSet<MapPolygon> MapTriangles { get; } = new();
+        protected HashSet<MapPolygon> MapPolygons { get; } = new();
         
         protected Canvas OutputCanvas { get; set; }
 
@@ -24,6 +25,7 @@ namespace Nrrdio.MapGenerator.Services {
             Log = log;
         }
 
+        protected async Task AddPoint(Point point) => await AddPoint(new MapPoint(point));
         protected async Task AddPoint(MapPoint point) {
             await Task.Delay(0);
 
@@ -34,8 +36,8 @@ namespace Nrrdio.MapGenerator.Services {
         }
 
         protected async Task AddPolygon(MapPolygon polygon) {
-            await Task.Delay(0);
-            MapTriangles.Add(polygon);
+            await Task.Delay(2);
+            MapPolygons.Add(polygon);
             OutputCanvas.Children.Add(polygon.CanvasCircumCircle);
             OutputCanvas.Children.Add(polygon.CanvasPolygon);
         }
@@ -58,7 +60,7 @@ namespace Nrrdio.MapGenerator.Services {
 
             OutputCanvas.Children.Remove(polygon.CanvasPolygon);
             OutputCanvas.Children.Remove(polygon.CanvasCircumCircle);
-            MapTriangles.Remove(polygon);
+            MapPolygons.Remove(polygon);
         }
 
         protected async Task RemoveSegment(MapSegment segment) {
@@ -73,6 +75,13 @@ namespace Nrrdio.MapGenerator.Services {
 
             OutputCanvas.Children.Remove(point.CanvasPoint);
             MapPoints.Remove(point);
+        }
+
+        protected void Clear() {
+            OutputCanvas.Children.Clear();
+            MapPoints.Clear();
+            MapSegments.Clear();
+            MapPolygons.Clear();
         }
 
         protected async Task WaitForContinue() {

@@ -23,9 +23,7 @@ namespace Nrrdio.MapGenerator.Services {
             Seed = new Random().Next();
             OutputCanvas = outputCanvas;
 
-            MapPoints.Clear();
-            MapTriangles.Clear();
-            OutputCanvas.Children.Clear();
+            Clear();
 
             PointCount = points;
             Border = border;
@@ -37,7 +35,6 @@ namespace Nrrdio.MapGenerator.Services {
             await RemovePoints();
             await RemoveTriangles();
             await ChopBorder();
-            await LloydsRelaxation();
         }
 
         async Task AddPoints() {
@@ -95,7 +92,7 @@ namespace Nrrdio.MapGenerator.Services {
                 point.CanvasPoint.Width = 10;
                 point.CanvasPoint.Height = 10;
 
-                var badTriangles = MapTriangles.Where(o => o.Circumcircle.Contains(point)).Cast<MapPolygon>().ToList();
+                var badTriangles = MapPolygons.Where(o => o.Circumcircle.Contains(point)).Cast<MapPolygon>().ToList();
 
                 // The inner shared edges will have a count > 1
                 var holeBoundaries = badTriangles.SelectMany(t => t.Edges)
@@ -125,7 +122,7 @@ namespace Nrrdio.MapGenerator.Services {
 
             var voronoiEdges = new List<MapSegment>();
 
-            foreach (var triangle in MapTriangles) {
+            foreach (var triangle in MapPolygons) {
                 var triangleOriginalColor = triangle.CanvasPolygon.Stroke;
                 var triangleOriginalThickness = triangle.CanvasPolygon.StrokeThickness;
                 triangle.CanvasPolygon.Stroke = new SolidColorBrush(Colors.Red);
@@ -134,7 +131,7 @@ namespace Nrrdio.MapGenerator.Services {
                 foreach (MapSegment edge in triangle.Edges) {
                     await AddSegment(edge);
 
-                    var neighbors = MapTriangles.Where(other => other.Edges.Contains(edge) && triangle != other);
+                    var neighbors = MapPolygons.Where(other => other.Edges.Contains(edge) && triangle != other);
 
                     foreach (var neighbor in neighbors) {
                         var neighborOriginalColor = neighbor.CanvasPolygon.Stroke;
@@ -157,6 +154,8 @@ namespace Nrrdio.MapGenerator.Services {
                     await RemoveSegment(edge);
                 }
 
+                await Task.Delay(2);
+
                 triangle.CanvasPolygon.Stroke = triangleOriginalColor;
                 triangle.CanvasPolygon.StrokeThickness = triangleOriginalThickness;
             }
@@ -169,12 +168,14 @@ namespace Nrrdio.MapGenerator.Services {
         }
 
         async Task RemoveTriangles() {
-            foreach (var triangle in MapTriangles) {
+            foreach (var triangle in MapPolygons) {
                 await RemovePolygon(triangle);
             }
         }
 
         async Task ChopBorder() {
+            Log.LogInformation("Chopping borders");
+
             var externalSegments = MapSegments.Where(segment => !Border.Contains(segment.Point1) || !Border.Contains(segment.Point2)).ToList();
 
             foreach (MapSegment borderEdge in Border.Edges) {
@@ -189,7 +190,7 @@ namespace Nrrdio.MapGenerator.Services {
                 await AddSegment(borderEdge);
 
                 foreach (var segment in externalSegments) {
-                    Log.LogInformation($"{segment}");
+                    await Task.Delay(2);
 
                     var origThickness = segment.CanvasPath.StrokeThickness;
                     var origStroke = segment.CanvasPath.Stroke;
@@ -241,14 +242,26 @@ namespace Nrrdio.MapGenerator.Services {
             } 
         }
 
-        async Task FindPolygons() {
-            // maybe add points to left[] and right[] then remove as iterating.or maybe add to l/ r as edges iterated.
+        async Task Relaxation() {
+            Log.LogInformation("Relaxing points");
+            
             await Task.Delay(0);
-        }
 
-        async Task LloydsRelaxation() {
-            // move poly centroid to circumcircle centroid? or maybe redraw everything off of circumcircles.
-            await Task.Delay(0);
+            var polygons = MapPolygons.ToList();
+            var points = new List<MapPoint>();
+
+            foreach (var polygon in polygons) {
+                points.Add(new MapPoint(polygon.Centroid));
+            }
+
+            Clear();
+
+            foreach (var point in points) {
+                var mapPoint = new MapPoint(point);
+                mapPoint.CanvasPoint.Fill = new SolidColorBrush(Colors.Purple);
+
+                await AddPoint(mapPoint);
+            }
         }
     }
 }
