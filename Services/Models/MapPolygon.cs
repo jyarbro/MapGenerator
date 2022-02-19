@@ -2,16 +2,20 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Nrrdio.Utilities.Maths;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Nrrdio.MapGenerator.Services.Models {
-    public class MapPolygon : Polygon {
+    public class MapPolygon : Polygon, IDisposable {
+        public IEnumerable<MapPoint> MapPoints => Vertices.Cast<MapPoint>();
+        public IEnumerable<MapSegment> MapSegments => Edges.Cast<MapSegment>();
+
         public Microsoft.UI.Xaml.Shapes.Path CanvasPolygon { get; }
         public Microsoft.UI.Xaml.Shapes.Ellipse CanvasCircumCircle { get; }
 
-        public MapPolygon(params Point[] points) : this(points.Cast<MapPoint>().ToList()) { }
-        public MapPolygon(params MapPoint[] points) : this(points.ToList()) { }
+        public MapPolygon(params Point[] points) { throw new NotImplementedException("Points must be MapPoints"); }
+        public MapPolygon(params MapPoint[] points) : this(points.AsEnumerable()) { }
         public MapPolygon(IEnumerable<MapPoint> points) : base(points) {
             foreach (MapPoint vertex in Vertices) {
                 vertex.AdjacentMapPolygons.Add(this);
@@ -19,9 +23,11 @@ namespace Nrrdio.MapGenerator.Services.Models {
 
             Edges.Clear();
 
+            var mapPoints = MapPoints.ToList();
+
             for (int i = 0; i < VertexCount; i++) {
                 var j = (i + 1) % VertexCount;
-                Edges.Add(new MapSegment(Vertices[i] as MapPoint, Vertices[j] as MapPoint));
+                Edges.Add(new MapSegment(mapPoints[i], mapPoints[j]));
             }
 
             CanvasPolygon = new Microsoft.UI.Xaml.Shapes.Path {
@@ -63,6 +69,12 @@ namespace Nrrdio.MapGenerator.Services.Models {
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(Circumcircle.Center.X - Circumcircle.Radius, Circumcircle.Center.Y - Circumcircle.Radius, 0, 0),
             };
+        }
+
+        public void Dispose() {
+            foreach (var point in MapPoints) {
+                point.AdjacentMapPolygons.Remove(this);
+            }
         }
     }
 }
