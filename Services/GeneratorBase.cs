@@ -167,6 +167,8 @@ namespace Nrrdio.MapGenerator.Services {
         }
 
         protected async Task WaitForContinue() {
+            Log.LogInformation("Waiting to continue");
+
             Continue = false;
 
             await Task.Run(() => {
