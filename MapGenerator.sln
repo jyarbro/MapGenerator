@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nrrdio.Utilities.Maths", "N
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Services", "Services\Services.csproj", "{7C8A44D6-6CAC-4E65-8C87-F5C973A26F99}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Git Configuration", "Git Configuration", "{D6CD64F2-46A3-41F0-B69B-CF01F007BCAD}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Git", "Git", "{D6CD64F2-46A3-41F0-B69B-CF01F007BCAD}"
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
@@ -27,6 +27,12 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "App.Core", "App.Core\App.Core.csproj", "{C563B765-7AF6-4B87-8D7E-ACD357D85C40}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "App.Tests.MSTest", "App.Tests.MSTest\App.Tests.MSTest.csproj", "{7A22467F-6033-4652-A30A-8119620369D0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configuration", "{AC755C0B-5F3B-4650-9695-4BDA64134411}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.vsconfig = .vsconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +81,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{3887DD15-8403-4C68-8D8F-CB168BDC0688} = {A7A144FB-1D61-40EC-AFD2-1F32CC8716E8}
 		{BDC69971-CE5E-437F-9CC1-341EFD2246B4} = {A7A144FB-1D61-40EC-AFD2-1F32CC8716E8}
+		{D6CD64F2-46A3-41F0-B69B-CF01F007BCAD} = {AC755C0B-5F3B-4650-9695-4BDA64134411}
 		{3FB3E6F2-6B0A-4155-93F7-AF2DFFE28776} = {A7A144FB-1D61-40EC-AFD2-1F32CC8716E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
