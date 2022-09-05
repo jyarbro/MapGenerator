@@ -31,7 +31,7 @@ namespace Nrrdio.MapGenerator.Services {
             await AddDelaunayTriangles();
             await AddVoronoiEdges();
             await ChopBorder();
-            //await FindPolygons();
+            await FindPolygons();
         }
 
         async Task AddBorderTriangles() {
@@ -41,7 +41,7 @@ namespace Nrrdio.MapGenerator.Services {
             int j;
 
             var centroid = new MapPoint(Border.Centroid);
-            //await AddPoint(centroid);
+            await AddPoint(centroid);
 
             var borderPoints = Border.MapPoints.ToList();
 
@@ -93,8 +93,8 @@ namespace Nrrdio.MapGenerator.Services {
                     await Task.Delay(0);
                     
                     OutputCanvas.Children.Add(mapSegment.CanvasPath);
-                    mapSegment.CanvasPath.Stroke = new SolidColorBrush(Colors.Purple);
-                    mapSegment.CanvasPath.StrokeThickness = 6;
+                    //mapSegment.CanvasPath.Stroke = new SolidColorBrush(Colors.Purple);
+                    //mapSegment.CanvasPath.StrokeThickness = 6;
                 }
 
                 var holeVertices = MapSegment.ArrangedVertices(holeBoundaries);
@@ -131,62 +131,39 @@ namespace Nrrdio.MapGenerator.Services {
         async Task AddVoronoiEdges() {
             Log.LogInformation("Starting voronoi edges");
 
-            var voronoiVertices = new HashSet<MapPoint>();
-            var voronoiEdges = new HashSet<MapSegment>();
-
-            foreach (var triangle in MapPolygons) {
-                //await Task.Delay(0);
-
-                var triangleOriginalColor = triangle.CanvasPolygon.Stroke;
-                var triangleOriginalThickness = triangle.CanvasPolygon.StrokeThickness;
-
-                // Highlight
-                triangle.CanvasPolygon.Stroke = new SolidColorBrush(Colors.Red);
-                triangle.CanvasPolygon.StrokeThickness = 5;
-
-                foreach (MapSegment edge in triangle.Edges) {
-                    var neighbors = MapPolygons.Where(other => other.Edges.Contains(edge) && triangle != other);
-
-                    foreach (var neighbor in neighbors) {
-                        var neighborOriginalColor = neighbor.CanvasPolygon.Stroke;
-                        var neighborOriginalThickness = neighbor.CanvasPolygon.StrokeThickness;
-                        
-                        // Highlight
-                        neighbor.CanvasPolygon.Stroke = new SolidColorBrush(Colors.Blue);
-                        neighbor.CanvasPolygon.StrokeThickness = 5;
-
-                        var point1 = new MapPoint(triangle.Circumcircle.Center);
-                        var point2 = new MapPoint(neighbor.Circumcircle.Center);
-                        
-                        voronoiVertices.Add(point1);
-                        voronoiVertices.Add(point2);
-
-                        var voronoiEdge = new MapSegment(point1, point2);
-
-                        voronoiEdges.Add(voronoiEdge);
-
-                        // Un-highlight
-                        neighbor.CanvasPolygon.Stroke = neighborOriginalColor;
-                        neighbor.CanvasPolygon.StrokeThickness = neighborOriginalThickness;
-                    }
-                }
-
-                // Un-highlight
-                triangle.CanvasPolygon.Stroke = triangleOriginalColor;
-                triangle.CanvasPolygon.StrokeThickness = triangleOriginalThickness;
-            }
+            var origPolygons = new List<MapPolygon>(MapPolygons);
 
             OutputCanvas.Children.Clear();
             MapPolygons.Clear();
             MapSegments.Clear();
             MapPoints.Clear();
 
-            foreach (var point in voronoiVertices) {
-                await AddPoint(point);
-            }
+            foreach (var triangle in origPolygons) {
+                //await Task.Delay(0);
 
-            foreach (var segment in voronoiEdges) {
-                await AddSegment(segment);
+                foreach (MapSegment edge in triangle.Edges) {
+                    var neighbors = origPolygons.Where(other => other.Edges.Contains(edge) && triangle != other);
+
+                    foreach (var neighbor in neighbors) {
+                        var point1 = MapPoints.FirstOrDefault(point => point == triangle.Circumcircle.Center);
+
+                        if (point1 is null) {
+                            point1 = new MapPoint(triangle.Circumcircle.Center);
+                            await AddPoint(point1);
+                        }
+
+                        var point2 = MapPoints.FirstOrDefault(point => point == neighbor.Circumcircle.Center);
+
+                        if (point2 is null) {
+                            point2 = new MapPoint(neighbor.Circumcircle.Center);
+                            await AddPoint(point2);
+                        }
+
+                        var voronoiEdge = new MapSegment(point1, point2);
+
+                        await AddSegment(voronoiEdge);
+                    }
+                }
             }
         }
 
@@ -201,21 +178,17 @@ namespace Nrrdio.MapGenerator.Services {
                     borderEdge.MapPoint2
                 };
 
-                // Highlight
-                borderEdge.CanvasPath.StrokeThickness = 5;
-                borderEdge.CanvasPath.Stroke = new SolidColorBrush(Colors.Black);
-
-                await AddSegment(borderEdge);
+                //await AddSegment(borderEdge);
 
                 foreach (var segment in externalSegments) {
                     //await Task.Delay(0);
                     
-                    var origThickness = segment.CanvasPath.StrokeThickness;
-                    var origStroke = segment.CanvasPath.Stroke;
+                    //var origThickness = segment.CanvasPath.StrokeThickness;
+                    //var origStroke = segment.CanvasPath.Stroke;
 
                     // Highlight
-                    segment.CanvasPath.StrokeThickness = 5;
-                    segment.CanvasPath.Stroke = new SolidColorBrush(Colors.Purple);
+                    //segment.CanvasPath.StrokeThickness = 5;
+                    //segment.CanvasPath.Stroke = new SolidColorBrush(Colors.Purple);
 
                     //await WaitForContinue();
 
@@ -236,11 +209,11 @@ namespace Nrrdio.MapGenerator.Services {
                         borderPoints.Add(borderIntersect);
                     }
 
-                    segment.CanvasPath.StrokeThickness = origThickness;
-                    segment.CanvasPath.Stroke = origStroke;
+                    //segment.CanvasPath.StrokeThickness = origThickness;
+                    //segment.CanvasPath.Stroke = origStroke;
                 }
 
-                await RemoveSegment(borderEdge);
+                //await RemoveSegment(borderEdge);
 
                 if (borderEdge.Point1.X == borderEdge.Point2.X) {
                     borderPoints = borderPoints.OrderBy(p => p.Y).ToList();
@@ -262,5 +235,56 @@ namespace Nrrdio.MapGenerator.Services {
             }
         }
 
+        async Task FindPolygons() {
+            Log.LogInformation("Finding polygons");
+
+            for (int i = 0; i < MapSegments.Count; i++) {
+                var currentSegment = MapSegments[i];
+                var polygonPoints = new List<MapPoint>();
+                
+                await AddSegmentToRight((MapPoint) currentSegment.Point2, (MapPoint) currentSegment.Point1, currentSegment, polygonPoints);
+
+                Log.LogInformation($"Polygon found with {polygonPoints.Count} points");
+
+                await Task.Delay(10);
+                //await WaitForContinue();
+            }
+
+            async Task AddSegmentToRight(MapPoint currentPoint, MapPoint originPoint, MapSegment currentSegment, List<MapPoint> polygonPoints) {
+                currentSegment.CanvasPath.StrokeThickness = 5;
+                currentSegment.CanvasPath.Stroke = new SolidColorBrush(Colors.Purple);
+
+                await Task.Delay(10);
+                await WaitForContinue();
+
+                polygonPoints.Add(currentPoint);
+                polygonPoints.Add(originPoint);
+
+                var otherSegments = MapSegments.Where(segment => (segment.Point1 != originPoint && segment.Point2 != originPoint) && !(polygonPoints.Contains(segment.Point1) && polygonPoints.Contains(segment.Point2)));
+
+                var rightMostCross = double.MaxValue;
+                MapPoint nextPoint = default;
+                MapSegment nextSegment = default;
+
+                foreach (var otherSegment in otherSegments) {
+                    var farPoint = otherSegment.Point1 == currentPoint ? otherSegment.Point2 : otherSegment.Point1;
+                    var farPointCross = farPoint.NearLine(currentSegment);
+
+                    if (farPointCross < rightMostCross) {
+                        nextPoint = (MapPoint) farPoint;
+                        nextSegment = otherSegment;
+                        rightMostCross = farPointCross;
+                    }
+                }
+
+                if (nextSegment is null) {
+                    return;
+                }
+
+                polygonPoints.Add(nextPoint);
+
+                await AddSegmentToRight(nextPoint, currentPoint, nextSegment, polygonPoints);
+            }
+        }
     }
 }
