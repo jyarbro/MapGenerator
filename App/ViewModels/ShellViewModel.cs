@@ -7,46 +7,38 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace App.ViewModels;
 
-public class ShellViewModel : ObservableRecipient
-{
+public class ShellViewModel : ObservableRecipient {
     private bool _isBackEnabled;
     private object? _selected;
 
-    public INavigationService NavigationService
-    {
+    public INavigationService NavigationService {
         get;
     }
 
-    public INavigationViewService NavigationViewService
-    {
+    public INavigationViewService NavigationViewService {
         get;
     }
 
-    public bool IsBackEnabled
-    {
+    public bool IsBackEnabled {
         get => _isBackEnabled;
         set => SetProperty(ref _isBackEnabled, value);
     }
 
-    public object? Selected
-    {
+    public object? Selected {
         get => _selected;
         set => SetProperty(ref _selected, value);
     }
 
-    public ShellViewModel(INavigationService navigationService, INavigationViewService navigationViewService)
-    {
+    public ShellViewModel(INavigationService navigationService, INavigationViewService navigationViewService) {
         NavigationService = navigationService;
         NavigationService.Navigated += OnNavigated;
         NavigationViewService = navigationViewService;
     }
 
-    private void OnNavigated(object sender, NavigationEventArgs e)
-    {
+    private void OnNavigated(object sender, NavigationEventArgs e) {
         IsBackEnabled = NavigationService.CanGoBack;
         var selectedItem = NavigationViewService.GetSelectedItem(e.SourcePageType);
-        if (selectedItem != null)
-        {
+        if (selectedItem != null) {
             Selected = selectedItem;
         }
     }

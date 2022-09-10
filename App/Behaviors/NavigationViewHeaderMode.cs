@@ -1,7 +1,6 @@
 ﻿namespace App.Behaviors;
 
-public enum NavigationViewHeaderMode
-{
+public enum NavigationViewHeaderMode {
     Always,
     Never,
     Minimal

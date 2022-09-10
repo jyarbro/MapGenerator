@@ -10,41 +10,34 @@ namespace App.Tests.MSTest;
 // https://docs.microsoft.com/visualstudio/test/run-unit-tests-with-test-explorer
 
 [TestClass]
-public class TestClass
-{
+public class TestClass {
     [ClassInitialize]
-    public static void ClassInitialize(TestContext context)
-    {
+    public static void ClassInitialize(TestContext context) {
         Debug.WriteLine("ClassInitialize");
     }
 
     [ClassCleanup]
-    public static void ClassCleanup()
-    {
+    public static void ClassCleanup() {
         Debug.WriteLine("ClassCleanup");
     }
 
     [TestInitialize]
-    public void TestInitialize()
-    {
+    public void TestInitialize() {
         Debug.WriteLine("TestInitialize");
     }
 
     [TestCleanup]
-    public void TestCleanup()
-    {
+    public void TestCleanup() {
         Debug.WriteLine("TestCleanup");
     }
 
     [TestMethod]
-    public void TestMethod()
-    {
+    public void TestMethod() {
         Assert.IsTrue(true);
     }
 
     [UITestMethod]
-    public void UITestMethod()
-    {
+    public void UITestMethod() {
         Assert.AreEqual(0, new Grid().ActualWidth);
     }
 }

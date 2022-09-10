@@ -10,23 +10,19 @@ namespace App.Core.Services;
 // 3. Models/SampleCompany.cs
 // 4. Models/SampleOrder.cs
 // 5. Models/SampleOrderDetail.cs
-public class SampleDataService : ISampleDataService
-{
+public class SampleDataService : ISampleDataService {
     private List<SampleOrder> _allOrders;
 
-    public SampleDataService()
-    {
+    public SampleDataService() {
     }
 
-    private static IEnumerable<SampleOrder> AllOrders()
-    {
+    private static IEnumerable<SampleOrder> AllOrders() {
         // The following is order summary data
         var companies = AllCompanies();
         return companies.SelectMany(c => c.Orders);
     }
 
-    private static IEnumerable<SampleCompany> AllCompanies()
-    {
+    private static IEnumerable<SampleCompany> AllCompanies() {
         return new List<SampleCompany>()
         {
             new SampleCompany()
@@ -496,10 +492,8 @@ public class SampleDataService : ISampleDataService
         };
     }
 
-    public async Task<IEnumerable<SampleOrder>> GetListDetailsDataAsync()
-    {
-        if (_allOrders == null)
-        {
+    public async Task<IEnumerable<SampleOrder>> GetListDetailsDataAsync() {
+        if (_allOrders == null) {
             _allOrders = new List<SampleOrder>(AllOrders());
         }
 
