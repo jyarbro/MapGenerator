@@ -1,7 +1,7 @@
-﻿namespace App.Contracts.ViewModels;
+﻿namespace Nrrdio.MapGenerator.App.Contracts.ViewModels;
 
 public interface INavigationAware {
-    void OnNavigatedTo(object parameter);
+	void OnNavigatedTo(object parameter);
 
-    void OnNavigatedFrom();
+	void OnNavigatedFrom();
 }

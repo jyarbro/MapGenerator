@@ -1,24 +1,18 @@
-﻿using App.ViewModels;
-
-using CommunityToolkit.WinUI.UI.Controls;
-
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
+using Nrrdio.MapGenerator.App.Helpers;
+using Nrrdio.MapGenerator.App.ViewModels;
 
-namespace App.Views;
+namespace Nrrdio.MapGenerator.App.Views;
 
+[RegisterPage(typeof(MainPageViewModel), typeof(MainPage))]
 public sealed partial class MainPage : Page {
-    public MainViewModel ViewModel {
-        get;
-    }
+    public MainPageViewModel ViewModel { get; }
 
     public MainPage() {
-        ViewModel = App.GetService<MainViewModel>();
+        ViewModel = App.GetService<MainPageViewModel>();
         InitializeComponent();
     }
 
-    private void OnViewStateChanged(object sender, ListDetailsViewState e) {
-        if (e == ListDetailsViewState.Both) {
-            ViewModel.EnsureItemSelected();
-        }
-    }
+    protected override void OnNavigatedTo(NavigationEventArgs e) { }
 }

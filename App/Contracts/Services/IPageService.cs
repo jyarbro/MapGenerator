@@ -1,5 +1,8 @@
-﻿namespace App.Contracts.Services;
+﻿namespace Nrrdio.MapGenerator.App.Contracts.Services;
 
 public interface IPageService {
-    Type GetPageType(string key);
+	Dictionary<string, Type> Pages { get; }
+
+	Type GetPageType(string key);
+	void Configure(Type viewModel, Type page);
 }

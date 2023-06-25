@@ -1,84 +1,62 @@
-﻿using App.Activation;
-using App.Contracts.Services;
-using App.Core.Contracts.Services;
-using App.Core.Services;
-using App.Helpers;
-using App.Services;
-using App.ViewModels;
-using App.Views;
-
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.UI.Xaml;
+using Nrrdio.MapGenerator.App.Contracts.Services;
+using Nrrdio.MapGenerator.App.Models;
+using Nrrdio.MapGenerator.App.Services;
+using Nrrdio.MapGenerator.App.ViewModels;
+using Nrrdio.MapGenerator.App.Views;
 
-namespace App;
+namespace Nrrdio.MapGenerator.App;
 
-// To learn more about WinUI 3, see https://docs.microsoft.com/windows/apps/winui/winui3/.
 public partial class App : Application {
-    // The .NET Generic Host provides dependency injection, configuration, logging, and other services.
-    // https://docs.microsoft.com/dotnet/core/extensions/generic-host
-    // https://docs.microsoft.com/dotnet/core/extensions/dependency-injection
-    // https://docs.microsoft.com/dotnet/core/extensions/configuration
-    // https://docs.microsoft.com/dotnet/core/extensions/logging
-    public IHost Host {
-        get;
+	public static Window MainWindow { get; } = new MainWindow();
+
+    public IHost Host { get; }
+
+    public App() {
+        InitializeComponent();
+
+        Host = Microsoft.Extensions.Hosting.Host
+            .CreateDefaultBuilder()
+            .UseContentRoot(AppContext.BaseDirectory)
+            .ConfigureAppConfiguration((context, builder) => {
+                builder.Sources.Clear();
+                StateManager.EnsureSettings();
+                builder.AddJsonFile("localSettings.json");
+                builder.AddJsonFile(StateManager.SettingsPath, optional: true);
+                builder.AddEnvironmentVariables();
+            })
+            .ConfigureServices(ConfigureServices)
+            .Build();
     }
 
     public static T GetService<T>()
         where T : class {
-        if ((App.Current as App)!.Host.Services.GetService(typeof(T)) is not T service) {
+
+        if ((Current as App)!.Host.Services.GetService(typeof(T)) is not T service) {
             throw new ArgumentException($"{typeof(T)} needs to be registered in ConfigureServices within App.xaml.cs.");
         }
 
         return service;
     }
 
-    public static WindowEx MainWindow { get; } = new MainWindow();
-
-    public App() {
-        InitializeComponent();
-
-        Host = Microsoft.Extensions.Hosting.Host.
-        CreateDefaultBuilder().
-        UseContentRoot(AppContext.BaseDirectory).
-        ConfigureServices((context, services) => {
-            // Default Activation Handler
-            services.AddTransient<ActivationHandler<LaunchActivatedEventArgs>, DefaultActivationHandler>();
-
-            // Other Activation Handlers
-
-            // Services
-            services.AddTransient<INavigationViewService, NavigationViewService>();
-
-            services.AddSingleton<IActivationService, ActivationService>();
-            services.AddSingleton<IPageService, PageService>();
-            services.AddSingleton<INavigationService, NavigationService>();
-
-            // Core Services
-            services.AddSingleton<ISampleDataService, SampleDataService>();
-            services.AddSingleton<IFileService, FileService>();
-
-            // Views and ViewModels
-            services.AddTransient<MainViewModel>();
-            services.AddTransient<MainPage>();
-            services.AddTransient<ShellPage>();
-            services.AddTransient<ShellViewModel>();
-
-            // Configuration
-        }).
-        Build();
-
-        UnhandledException += App_UnhandledException;
+    protected override void OnLaunched(LaunchActivatedEventArgs args) {
+        MainWindow.Activate();
     }
 
-    private void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e) {
-        // TODO: Log and handle exceptions as appropriate.
-        // https://docs.microsoft.com/windows/windows-app-sdk/api/winrt/microsoft.ui.xaml.application.unhandledexception.
-    }
+    void ConfigureServices(HostBuilderContext context, IServiceCollection services) {
+        services.AddScoped<IStateManager, StateManager>();
+        services.AddScoped<IPageService, PageService>();
+        services.AddScoped<INavigationService, NavigationService>();
 
-    protected async override void OnLaunched(LaunchActivatedEventArgs args) {
-        base.OnLaunched(args);
+        services.AddTransient<MainWindowViewModel>();
+        services.AddTransient<MainPageViewModel>();
+        services.AddTransient<MainPage>();
 
-        await App.GetService<IActivationService>().ActivateAsync(args);
+        services
+            .AddOptions<Settings>()
+            .Bind(context.Configuration.GetSection(nameof(Settings)))
+            .ValidateDataAnnotations();
     }
 }
