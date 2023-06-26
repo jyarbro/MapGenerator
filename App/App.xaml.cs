@@ -1,11 +1,14 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Nrrdio.MapGenerator.App.Contracts.Services;
 using Nrrdio.MapGenerator.App.Models;
 using Nrrdio.MapGenerator.App.Services;
 using Nrrdio.MapGenerator.App.ViewModels;
 using Nrrdio.MapGenerator.App.Views;
+using Nrrdio.MapGenerator.Services;
+using Nrrdio.Utilities.Loggers;
 
 namespace Nrrdio.MapGenerator.App;
 
@@ -46,6 +49,8 @@ public partial class App : Application {
     }
 
     void ConfigureServices(HostBuilderContext context, IServiceCollection services) {
+        services.AddSingleton<ILoggerProvider, HandlerLoggerProvider>(_ => new HandlerLoggerProvider { LogLevel = LogLevel.Trace });
+
         services.AddScoped<IStateManager, StateManager>();
         services.AddScoped<IPageService, PageService>();
         services.AddScoped<INavigationService, NavigationService>();
@@ -54,9 +59,13 @@ public partial class App : Application {
         services.AddTransient<MainPageViewModel>();
         services.AddTransient<MainPage>();
 
+        services.AddTransient<DelaunayVoronoiGenerator>();
+
         services
             .AddOptions<Settings>()
             .Bind(context.Configuration.GetSection(nameof(Settings)))
             .ValidateDataAnnotations();
+
+        services.AddLogging();
     }
 }

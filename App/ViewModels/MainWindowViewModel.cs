@@ -34,7 +34,7 @@ public class MainWindowViewModel : ObservableRecipient {
         PageService = pageService;
     }
 
-    public void Initialize(NavigationView view, Frame frame) {
+    public void Activate(object? sender, WindowActivatedEventArgs args) {
         var pageTypes =
             from type in Assembly.GetExecutingAssembly().GetTypes()
             where type.IsDefined(typeof(RegisterPageAttribute), false)
@@ -47,8 +47,9 @@ public class MainWindowViewModel : ObservableRecipient {
         }
 
         NavigationService.NavigateTo(PageService.Pages.First().Key);
+    }
 
-
+    public void Initialize(NavigationView view, Frame frame) {
         NavigationView = view;
         NavigationView.ItemInvoked += OnItemInvoked;
 

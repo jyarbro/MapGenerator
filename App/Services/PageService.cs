@@ -20,15 +20,18 @@ public class PageService : IPageService {
 	public void Configure(Type viewModel, Type page) {
 		lock (Pages) {
 			var viewModelName = viewModel.FullName!;
-			if (Pages.ContainsKey(viewModelName)) {
-				throw new ArgumentException($"The key {viewModelName} is already configured in PageService");
-			}
 
-			if (Pages.Any(p => p.Value == page)) {
-				throw new ArgumentException($"This type is already configured with key {Pages.First(p => p.Value == page).Key}");
-			}
+            Pages.TryAdd(viewModelName, page);
 
-			Pages.Add(viewModelName, page);
+            //if (Pages.ContainsKey(viewModelName)) {
+			//	throw new ArgumentException($"The key {viewModelName} is already configured in PageService");
+			//}
+
+			//if (Pages.Any(p => p.Value == page)) {
+			//	throw new ArgumentException($"This type is already configured with key {Pages.First(p => p.Value == page).Key}");
+			//}
+
+			//Pages.Add(viewModelName, page);
 		}
 	}
 }

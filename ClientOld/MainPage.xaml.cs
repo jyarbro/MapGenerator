@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Toolkit.Mvvm.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
-using Nrrdio.MapGenerator.Services;
 using Nrrdio.Utilities.Loggers;
 using System;
 using System.Runtime.InteropServices;

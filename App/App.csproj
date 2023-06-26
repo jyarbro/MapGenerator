@@ -33,6 +33,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Nrrdio.Utilities\Nrrdio.Utilities.WinUI\Nrrdio.Utilities.WinUI.csproj" />
+      <ProjectReference Include="..\Nrrdio.Utilities\Nrrdio.Utilities\Nrrdio.Utilities.csproj" />
+      <ProjectReference Include="..\Services\Services.csproj" />
     </ItemGroup>
 
     <ItemGroup>

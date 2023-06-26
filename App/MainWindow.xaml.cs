@@ -8,8 +8,8 @@ using Nrrdio.MapGenerator.App.ViewModels;
 namespace Nrrdio.MapGenerator.App;
 
 public sealed partial class MainWindow : Window {
-    const int DEFAULT_WIDTH = 800;
-    const int DEFAULT_HEIGHT = 600;
+    const int DEFAULT_WIDTH = 1800;
+    const int DEFAULT_HEIGHT = 800;
 
     MainWindowViewModel ViewModel { get; }
 
@@ -17,6 +17,7 @@ public sealed partial class MainWindow : Window {
 
     public MainWindow() {
         ViewModel = App.GetService<MainWindowViewModel>();
+        Activated += ViewModel.Activate;
 
         InitializeComponent();
 

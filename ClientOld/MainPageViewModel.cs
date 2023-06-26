@@ -1,9 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
+using Nrrdio.MapGenerator.Services;
 using Nrrdio.MapGenerator.Services.Models;
 using System.Threading.Tasks;
 
-namespace Nrrdio.MapGenerator.Services; 
+namespace Nrrdio.MapGenerator.Client;
 public class MainPageViewModel {
     public int CanvasWidth { get; private set; }
     public int CanvasHeight { get; private set; }
