@@ -1,7 +1,0 @@
-﻿<Window
-    x:Class="Nrrdio.MapGenerator.Client.MainWindow"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Nrrdio.MapGenerator.Client">
-    <local:MainPage/>
-</Window>
