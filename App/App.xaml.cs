@@ -46,6 +46,8 @@ public partial class App : Application {
 
     protected override void OnLaunched(LaunchActivatedEventArgs args) {
         MainWindow.Activate();
+        
+        GetService<INavigationService>().NavigateTo(typeof(MainPageViewModel).FullName!, args.Arguments);
     }
 
     void ConfigureServices(HostBuilderContext context, IServiceCollection services) {
