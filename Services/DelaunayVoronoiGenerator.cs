@@ -33,7 +33,7 @@ public class DelaunayVoronoiGenerator : GeneratorBase, IGenerator {
     }
 
     async Task AddBorderTriangles() {
-        Log.LogInformation("Adding border triangles");
+        Log.LogTrace("Adding border triangles");
 
         var borderVertices = Border.Vertices.Count;
         int j;
@@ -54,7 +54,7 @@ public class DelaunayVoronoiGenerator : GeneratorBase, IGenerator {
 
     // https://www.codeguru.com/cplusplus/delaunay-triangles/
     async Task AddDelaunayTriangles() {
-        Log.LogInformation("Adding delaunay triangles");
+        Log.LogTrace("Adding delaunay triangles");
 
         foreach (var mapPoint in MapPoints) {
             mapPoint.Highlight();
@@ -116,7 +116,7 @@ public class DelaunayVoronoiGenerator : GeneratorBase, IGenerator {
     }
 
     async Task AddVoronoiEdges() {
-        Log.LogInformation("Starting voronoi edges");
+        Log.LogTrace("Starting voronoi edges");
 
         var origPolygons = new List<MapPolygon>(MapPolygons);
 
@@ -157,7 +157,7 @@ public class DelaunayVoronoiGenerator : GeneratorBase, IGenerator {
     }
 
     async Task ChopBorder() {
-        Log.LogInformation("Chopping borders");
+        Log.LogTrace("Chopping borders");
 
         var externalSegments = MapSegments.Where(segment => !Border.Contains(segment.Point1) || !Border.Contains(segment.Point2)).ToList();
 
@@ -207,7 +207,7 @@ public class DelaunayVoronoiGenerator : GeneratorBase, IGenerator {
     }
 
     async Task FindPolygons() {
-        Log.LogInformation("Finding polygons");
+        Log.LogTrace("Finding polygons");
 
         for (var i = 0; i < MapSegments.Count; i++) {
             var currentSegment = MapSegments[i];
@@ -221,15 +221,13 @@ public class DelaunayVoronoiGenerator : GeneratorBase, IGenerator {
             await AddPolygon(polygon);
             polygon.ShowPolygon();
 
-            Log.LogInformation("Polygon found with {Points} points", polygonPoints.Count);
+            Log.LogTrace("Polygon found with {Points} points", polygonPoints.Count);
 
-            await Task.Delay(10);
+            //await Task.Delay(10);
         }
 
         async Task AddSegmentToRight(MapPoint currentPoint, MapPoint originPoint, MapSegment currentSegment, List<MapPoint> polygonPoints) {
-            currentSegment.Highlight();
-
-            await Task.Delay(100);
+            //currentSegment.Highlight();
 
             polygonPoints.Add(currentPoint);
 
@@ -247,9 +245,9 @@ public class DelaunayVoronoiGenerator : GeneratorBase, IGenerator {
                 && !(polygonPoints.Contains(segment.Point1)
                 && polygonPoints.Contains(segment.Point2)));
 
-            foreach (var otherSegment in otherSegments) {
-                otherSegment.HighlightAlt();
-            }
+            //foreach (var otherSegment in otherSegments) {
+            //    otherSegment.HighlightAlt();
+            //}
 
             MapPoint nextPoint = default;
             MapSegment nextSegment = default;
@@ -300,16 +298,16 @@ public class DelaunayVoronoiGenerator : GeneratorBase, IGenerator {
                 }
             }
             
-            foreach (var otherSegment in otherSegments) {
-                otherSegment.Subdue();
-            }
+            //foreach (var otherSegment in otherSegments) {
+            //    otherSegment.Subdue();
+            //}
 
             if (nextSegment is null) {
                 return;
             }
 
-            currentPoint.Subdue();
-            currentSegment.Subdue();
+            //currentPoint.Subdue();
+            //currentSegment.Subdue();
 
             await AddSegmentToRight(nextPoint, currentPoint, nextSegment, polygonPoints);
         }

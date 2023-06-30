@@ -35,12 +35,14 @@ public sealed partial class MainPage : Page {
     protected override void OnNavigatedTo(NavigationEventArgs e) { }
 
     async Task Redraw() {
+        Log.LogTrace($"{nameof(Redraw)}");
+
         if (Drawing) {
+            Log.LogTrace($"Already drawing");
             return;
         }
 
         Drawing = true;
-        Log.LogInformation($"{nameof(Redraw)}");
         await ViewModel.Start();
         Drawing = false;
     }
@@ -52,7 +54,7 @@ public sealed partial class MainPage : Page {
         catch (COMException) { }
     }
 
-    async void OnPageLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+    async void OnPageLoaded(object sender, RoutedEventArgs e) {
         Log.LogTrace($"Event: {nameof(OnPageLoaded)}");
 
         try {
@@ -61,7 +63,7 @@ public sealed partial class MainPage : Page {
         catch (COMException exception) when (exception.Message.Contains("The object has been closed.")) { }
     }
 
-    async void OnSizeChanged(object sender, Microsoft.UI.Xaml.SizeChangedEventArgs e) {
+    async void OnSizeChanged(object sender, SizeChangedEventArgs e) {
         Log.LogTrace($"Event: {nameof(OnSizeChanged)}");
 
         Resizing++;
@@ -76,7 +78,7 @@ public sealed partial class MainPage : Page {
         }
     }
 
-    async void OnRedrawButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+    async void OnRedrawButtonClick(object sender, RoutedEventArgs e) {
         Log.LogTrace($"Event: {nameof(OnRedrawButtonClick)}");
 
         try {
@@ -85,7 +87,7 @@ public sealed partial class MainPage : Page {
         catch (COMException exception) when (exception.Message.Contains("The object has been closed.")) { }
     }
 
-    void OnContinueButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+    void OnContinueButtonClick(object sender, RoutedEventArgs e) {
         Log.LogTrace($"Event: {nameof(OnContinueButtonClick)}");
         ViewModel.Continue();
     }

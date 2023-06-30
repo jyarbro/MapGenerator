@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Nrrdio.MapGenerator.Services.Models;
 using Nrrdio.Utilities.Maths;
 using System;
@@ -10,9 +8,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.UI;
 
-namespace Nrrdio.MapGenerator.Services; 
+namespace Nrrdio.MapGenerator.Services;
 public class GeneratorBase {
     public bool Continue { get; set; }
     public int Seed {
@@ -43,7 +40,7 @@ public class GeneratorBase {
     }
 
     protected async Task GeneratePoints() {
-        Log.LogInformation("Adding points");
+        Log.LogTrace("Adding points");
 
         double pointX;
         double pointY;
@@ -165,6 +162,8 @@ public class GeneratorBase {
     }
 
     protected async Task Clear() {
+        Log.LogTrace("Clearing memory");
+        
         await ClearPolygons();
         await ClearSegments();
         await ClearPoints();
