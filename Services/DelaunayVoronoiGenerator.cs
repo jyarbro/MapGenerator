@@ -1,9 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Shapes;
 using Nrrdio.MapGenerator.Services.Models;
 using System;
 using System.Collections.Generic;
@@ -11,9 +8,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Nrrdio.MapGenerator.Services; 
+namespace Nrrdio.MapGenerator.Services;
 
-public class DelaunayVoronoiGenerator : GeneratorBase {
+public class DelaunayVoronoiGenerator : GeneratorBase, IGenerator {
     public DelaunayVoronoiGenerator(ILogger<GeneratorBase> log) : base(log) { }
 
     public async Task Generate(int points, MapPolygon border, Canvas outputCanvas) {
@@ -60,24 +57,22 @@ public class DelaunayVoronoiGenerator : GeneratorBase {
         Log.LogInformation("Adding delaunay triangles");
 
         foreach (var mapPoint in MapPoints) {
-            var originalPointSize = mapPoint.CanvasPoint.Width;
+            mapPoint.Highlight();
 
-            // Highlight
-            mapPoint.CanvasPoint.Width = 10;
-            mapPoint.CanvasPoint.Height = 10;
-
+            //Use this block when bad triangles logic is okay.
             var badTriangles = MapPolygons.Where(polygon => polygon.Circumcircle.Contains(mapPoint)).ToList();
 
-            // Use this block instead when debugging bad triangles.
+            //Use this block instead when debugging bad triangles.
             //var badTriangles = new List<MapPolygon>();
 
             //foreach (var mapPolygon in MapPolygons) {
             //    if (mapPolygon.Circumcircle.Contains(mapPoint)) {
-            //        mapPolygon.CanvasPolygon.Stroke = new SolidColorBrush(Colors.Purple);
-            //        mapPolygon.CanvasPolygon.StrokeThickness = 6;
-            //        mapPolygon.CanvasCircumCircle.Visibility = Visibility.Visible;
+            //        mapPolygon.Highlight();
+            //        mapPolygon.ShowCircumcircle();
             //        badTriangles.Add(mapPolygon);
             //    }
+
+            //    await Task.Delay(100);
             //}
 
             // The inner shared edges will have a count > 1, so this only selects edges with a count of 1
@@ -91,11 +86,8 @@ public class DelaunayVoronoiGenerator : GeneratorBase {
             Debug.Assert(!holeBoundaries.Any(edge => edge.Contains(mapPoint) && mapPoint != edge.Point1 && mapPoint != edge.Point2));
 
             foreach (var mapSegment in holeBoundaries) {
-                await Task.Delay(0);
-
                 OutputCanvas.Children.Add(mapSegment.CanvasPath);
-                //mapSegment.CanvasPath.Stroke = new SolidColorBrush(Colors.Purple);
-                //mapSegment.CanvasPath.StrokeThickness = 6;
+                mapSegment.Highlight();
             }
 
             var holeVertices = MapSegment.ArrangedVertices(holeBoundaries);
@@ -110,22 +102,16 @@ public class DelaunayVoronoiGenerator : GeneratorBase {
                 }
             }
 
-            await Task.Delay(0);
-
             foreach (var mapSegment in holeBoundaries) {
-                mapSegment.CanvasPath.Stroke = new SolidColorBrush(Colors.SteelBlue);
-                mapSegment.CanvasPath.StrokeThickness = 1;
                 OutputCanvas.Children.Remove(mapSegment.CanvasPath);
             }
 
             foreach (var mapPolygon in badTriangles) {
-                mapPolygon.CanvasCircumCircle.Visibility = Visibility.Collapsed;
+                mapPolygon.CanvasCircumcircle.Visibility = Visibility.Collapsed;
                 await RemovePolygon(mapPolygon);
             }
 
-            // Un-highlight
-            mapPoint.CanvasPoint.Width = originalPointSize;
-            mapPoint.CanvasPoint.Height = originalPointSize;
+            mapPoint.Subdue();
         }
     }
 
@@ -140,11 +126,13 @@ public class DelaunayVoronoiGenerator : GeneratorBase {
         MapPoints.Clear();
 
         foreach (var triangle in origPolygons) {
-            //await Task.Delay(0);
-
             foreach (MapSegment edge in triangle.Edges) {
                 var neighbors = origPolygons.Where(other => other.Edges.Contains(edge) && triangle != other);
 
+                // This will often generate triangles that are far above/below/beside the border.
+                // This is because the circumcircle center of the edge triangles is sometimes very far out.
+                // This could perhaps be avoided if the border corners aren't used, and instead
+                // if we generated random points outside the border area.
                 foreach (var neighbor in neighbors) {
                     var point1 = MapPoints.FirstOrDefault(point => point == triangle.Circumcircle.Center);
 
@@ -179,20 +167,7 @@ public class DelaunayVoronoiGenerator : GeneratorBase {
                 borderEdge.MapPoint2
             };
 
-            //await AddSegment(borderEdge);
-
             foreach (var segment in externalSegments) {
-                //await Task.Delay(0);
-
-                //var origThickness = segment.CanvasPath.StrokeThickness;
-                //var origStroke = segment.CanvasPath.Stroke;
-
-                // Highlight
-                //segment.CanvasPath.StrokeThickness = 5;
-                //segment.CanvasPath.Stroke = new SolidColorBrush(Colors.Purple);
-
-                //await WaitForContinue();
-
                 var (intersects, intersection, intersectionEnd) = borderEdge.Intersects(segment);
 
                 if (intersects && intersectionEnd is null) {
@@ -209,12 +184,7 @@ public class DelaunayVoronoiGenerator : GeneratorBase {
 
                     borderPoints.Add(borderIntersect);
                 }
-
-                //segment.CanvasPath.StrokeThickness = origThickness;
-                //segment.CanvasPath.Stroke = origStroke;
             }
-
-            //await RemoveSegment(borderEdge);
 
             if (borderEdge.Point1.X == borderEdge.Point2.X) {
                 borderPoints = borderPoints.OrderBy(p => p.Y).ToList();
@@ -241,48 +211,105 @@ public class DelaunayVoronoiGenerator : GeneratorBase {
 
         for (var i = 0; i < MapSegments.Count; i++) {
             var currentSegment = MapSegments[i];
-            var polygonPoints = new List<MapPoint>();
+            var polygonPoints = new List<MapPoint> {
+                (MapPoint)currentSegment.Point1
+            };
 
             await AddSegmentToRight((MapPoint)currentSegment.Point2, (MapPoint)currentSegment.Point1, currentSegment, polygonPoints);
+
+            var polygon = new MapPolygon(polygonPoints);
+            await AddPolygon(polygon);
+            polygon.ShowPolygon();
 
             Log.LogInformation("Polygon found with {Points} points", polygonPoints.Count);
 
             await Task.Delay(10);
-            //await WaitForContinue();
         }
 
         async Task AddSegmentToRight(MapPoint currentPoint, MapPoint originPoint, MapSegment currentSegment, List<MapPoint> polygonPoints) {
-            currentSegment.CanvasPath.StrokeThickness = 5;
-            currentSegment.CanvasPath.Stroke = new SolidColorBrush(Colors.Purple);
+            currentSegment.Highlight();
 
-            await Task.Delay(10);
-            await WaitForContinue();
+            await Task.Delay(100);
 
             polygonPoints.Add(currentPoint);
-            polygonPoints.Add(originPoint);
 
-            var otherSegments = MapSegments.Where(segment => (segment.Point1 != originPoint && segment.Point2 != originPoint) && !(polygonPoints.Contains(segment.Point1) && polygonPoints.Contains(segment.Point2)));
+            var currentSegmentIsReversed = false;
+            var bestAngle = float.MinValue;
 
-            var rightMostCross = double.MaxValue;
+            if (currentPoint == currentSegment.Point1) {
+                currentSegmentIsReversed = true;
+                bestAngle = float.MaxValue;
+            }
+
+            var otherSegments = MapSegments.Where(segment =>
+                (segment.Point1 == currentPoint || segment.Point2 == currentPoint)
+                && (segment.Point1 != originPoint && segment.Point2 != originPoint)
+                && !(polygonPoints.Contains(segment.Point1)
+                && polygonPoints.Contains(segment.Point2)));
+
+            foreach (var otherSegment in otherSegments) {
+                otherSegment.HighlightAlt();
+            }
+
             MapPoint nextPoint = default;
             MapSegment nextSegment = default;
 
+            // Encounter at farPoint
             foreach (var otherSegment in otherSegments) {
-                var farPoint = otherSegment.Point1 == currentPoint ? otherSegment.Point2 : otherSegment.Point1;
-                var farPointCross = farPoint.NearLine(currentSegment);
+                var farPoint = otherSegment.Point2;
+                var otherSegmentIsReversed = false;
 
-                if (farPointCross < rightMostCross) {
-                    nextPoint = (MapPoint)farPoint;
-                    nextSegment = otherSegment;
-                    rightMostCross = farPointCross;
+                if (currentPoint == farPoint) {
+                    farPoint = otherSegment.Point1;
+                    otherSegmentIsReversed = true;
                 }
+
+                if (currentSegmentIsReversed) {
+                    if (!farPoint.LeftSideOfLine(currentSegment)) {
+                        continue;
+                    }
+
+                    var otherSegmentAngle = currentSegment.AngleTo(otherSegment);
+
+                    if (otherSegmentIsReversed) {
+                        otherSegmentAngle = 180 - otherSegmentAngle;
+                    }
+
+                    if (otherSegmentAngle < bestAngle) {
+                        bestAngle = otherSegmentAngle;
+                        nextPoint = (MapPoint)farPoint;
+                        nextSegment = otherSegment;
+                    }
+                }
+                else {
+                    if (farPoint.LeftSideOfLine(currentSegment)) {
+                        continue;
+                    }
+
+                    var otherSegmentAngle = currentSegment.AngleTo(otherSegment);
+
+                    if (otherSegmentIsReversed) {
+                        otherSegmentAngle = 180 - otherSegmentAngle;
+                    }
+
+                    if (otherSegmentAngle > bestAngle) {
+                        bestAngle = otherSegmentAngle;
+                        nextPoint = (MapPoint)farPoint;
+                        nextSegment = otherSegment;
+                    }
+                }
+            }
+            
+            foreach (var otherSegment in otherSegments) {
+                otherSegment.Subdue();
             }
 
             if (nextSegment is null) {
                 return;
             }
 
-            polygonPoints.Add(nextPoint);
+            currentPoint.Subdue();
+            currentSegment.Subdue();
 
             await AddSegmentToRight(nextPoint, currentPoint, nextSegment, polygonPoints);
         }

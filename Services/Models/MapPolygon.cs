@@ -11,16 +11,25 @@ public class MapPolygon : Polygon, IDisposable {
     public IEnumerable<MapPoint> MapPoints => Vertices.Cast<MapPoint>();
     public IEnumerable<MapSegment> MapSegments => Edges.Cast<MapSegment>();
 
-    public Microsoft.UI.Xaml.Shapes.Path CanvasPolygon { get; }
-    public Microsoft.UI.Xaml.Shapes.Ellipse CanvasCircumCircle { get; }
+    public Microsoft.UI.Xaml.Shapes.Path CanvasPath { get; }
+    public Microsoft.UI.Xaml.Shapes.Polygon CanvasPolygon { get; }
+    public Microsoft.UI.Xaml.Shapes.Ellipse CanvasCircumcircle { get; }
+
+    Windows.UI.Color SubduedColor = Colors.LightSteelBlue;
+    const int SubduedSize = 2;
+
+    Windows.UI.Color HighlightedColor = Colors.Purple;
+    const int HighlightedSize = 6;
 
     public MapPolygon(params Point[] points) { throw new NotImplementedException("Points must be MapPoints"); }
     public MapPolygon(params MapPoint[] points) : this(points.AsEnumerable()) { }
     public MapPolygon(IEnumerable<MapPoint> points) : base(points) {
-        foreach (MapPoint vertex in Vertices) {
+        // Notify our neighbors that we've moved in next door.        
+        foreach (var vertex in Vertices.Cast<MapPoint>()) {
             vertex.AdjacentMapPolygons.Add(this);
         }
 
+        // Add edges
         Edges.Clear();
 
         var mapPoints = MapPoints.ToList();
@@ -30,9 +39,10 @@ public class MapPolygon : Polygon, IDisposable {
             Edges.Add(new MapSegment(mapPoints[i], mapPoints[j]));
         }
 
-        CanvasPolygon = new Microsoft.UI.Xaml.Shapes.Path {
-            Stroke = new SolidColorBrush(Colors.LightSteelBlue),
-            StrokeThickness = 2
+        // Construct the canvas path
+        CanvasPath = new Microsoft.UI.Xaml.Shapes.Path {
+            Stroke = new SolidColorBrush(SubduedColor),
+            StrokeThickness = SubduedSize
         };
 
         var geometryGroup = new GeometryGroup();
@@ -57,9 +67,24 @@ public class MapPolygon : Polygon, IDisposable {
             geometryGroup.Children.Add(lineGeometry);
         }
 
-        CanvasPolygon.Data = geometryGroup;
+        CanvasPath.Data = geometryGroup;
 
-        CanvasCircumCircle = new Microsoft.UI.Xaml.Shapes.Ellipse {
+        // Construct the canvas polygon
+        CanvasPolygon = new Microsoft.UI.Xaml.Shapes.Polygon {
+            Visibility = Visibility.Collapsed,
+            Fill = new SolidColorBrush(Windows.UI.Color.FromArgb(80, 40, 40, 180))
+        };
+
+        var pointCollection = new PointCollection();
+
+        foreach (var vertex in Vertices) {
+            pointCollection.Add(new Windows.Foundation.Point(vertex.X, vertex.Y));
+        }
+
+        CanvasPolygon.Points = pointCollection;
+
+        // Construct the canvas circumcircle
+        CanvasCircumcircle = new Microsoft.UI.Xaml.Shapes.Ellipse {
             Visibility = Visibility.Collapsed,
             Stroke = new SolidColorBrush(Colors.DarkGray),
             StrokeThickness = 1,
@@ -75,5 +100,39 @@ public class MapPolygon : Polygon, IDisposable {
         foreach (var point in MapPoints) {
             point.AdjacentMapPolygons.Remove(this);
         }
+    }
+
+    public void Subdue() {
+        CanvasPath.Stroke = new SolidColorBrush(SubduedColor);
+        CanvasPath.StrokeThickness = SubduedSize;
+    }
+
+    public void Highlight() {
+        CanvasPath.Stroke = new SolidColorBrush(HighlightedColor);
+        CanvasPath.StrokeThickness = HighlightedSize;
+    }
+
+    public void ShowPath() {
+        CanvasPath.Visibility = Visibility.Visible;
+    }
+
+    public void HidePath() {
+        CanvasPath.Visibility = Visibility.Collapsed;
+    }
+
+    public void ShowPolygon() {
+        CanvasPolygon.Visibility = Visibility.Visible;
+    }
+
+    public void HidePolygon() {
+        CanvasPolygon.Visibility = Visibility.Collapsed;
+    }
+
+    public void ShowCircumcircle() {
+        CanvasCircumcircle.Visibility = Visibility.Visible;
+    }
+
+    public void HideCircumcircle() {
+        CanvasCircumcircle.Visibility = Visibility.Collapsed;
     }
 }

@@ -61,7 +61,8 @@ public partial class App : Application {
         services.AddTransient<MainPageViewModel>();
         services.AddTransient<MainPage>();
 
-        services.AddTransient<DelaunayVoronoiGenerator>();
+        services.AddTransient<IGenerator, DelaunayVoronoiGenerator>();
+        //services.AddTransient<IGenerator, CrossProductsGenerator>();
 
         services
             .AddOptions<Settings>()

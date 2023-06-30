@@ -27,6 +27,13 @@
             Name="OutputCanvas"
             Margin="10" 
             Width="600"
-            Height="600"/>
+            Height="600">
+            <Canvas.RenderTransform>
+                <TransformGroup>
+                    <TranslateTransform Y="-600" />
+                    <ScaleTransform ScaleY="-1" />
+                </TransformGroup>
+            </Canvas.RenderTransform>
+        </Canvas>
     </StackPanel>
 </Page>

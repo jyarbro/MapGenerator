@@ -1,4 +1,5 @@
 ﻿using Microsoft.UI;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Nrrdio.Utilities.Maths;
 using System;
@@ -13,6 +14,13 @@ public class MapSegment : Segment, IDisposable {
 
     public LineGeometry CanvasGeometry { get; }
     public Microsoft.UI.Xaml.Shapes.Path CanvasPath { get; }
+
+    Windows.UI.Color SubduedColor = Colors.Blue;
+    const int SubduedSize = 3;
+
+    Windows.UI.Color HighlightedColor = Colors.Purple;
+    Windows.UI.Color HighlightedAltColor = Colors.Orange;
+    const int HighlightedSize = 5;
 
     public MapSegment(MapPoint point1, MapPoint point2) : base(point1, point2) {
         point1.AdjacentMapSegments.Add(this);
@@ -33,8 +41,8 @@ public class MapSegment : Segment, IDisposable {
         geometryGroup.Children.Add(CanvasGeometry);
 
         CanvasPath = new Microsoft.UI.Xaml.Shapes.Path {
-            Stroke = new SolidColorBrush(Colors.Blue),
-            StrokeThickness = 3,
+            Stroke = new SolidColorBrush(SubduedColor),
+            StrokeThickness = SubduedSize,
             Data = geometryGroup
         };
     }
@@ -71,5 +79,28 @@ public class MapSegment : Segment, IDisposable {
         }
 
         return vertices.Cast<MapPoint>().ToList();
+    }
+
+    public void Subdue() {
+        CanvasPath.Stroke = new SolidColorBrush(SubduedColor);
+        CanvasPath.StrokeThickness = SubduedSize;
+    }
+
+    public void Highlight() {
+        CanvasPath.Stroke = new SolidColorBrush(HighlightedColor);
+        CanvasPath.StrokeThickness = HighlightedSize;
+    }
+
+    public void HighlightAlt() {
+        CanvasPath.Stroke = new SolidColorBrush(HighlightedAltColor);
+        CanvasPath.StrokeThickness = HighlightedSize;
+    }
+
+    public void Show() {
+        CanvasPath.Visibility = Visibility.Visible;
+    }
+
+    public void Hide() {
+        CanvasPath.Visibility = Visibility.Collapsed;
     }
 }

@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Nrrdio.MapGenerator.Services.Models;
 using Nrrdio.Utilities.Maths;
 using System;
@@ -8,6 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.UI;
 
 namespace Nrrdio.MapGenerator.Services; 
 public class GeneratorBase {
@@ -84,8 +87,9 @@ public class GeneratorBase {
     protected async Task AddPolygon(MapPolygon polygon) {
         await Task.Delay(0);
         MapPolygons.Add(polygon);
-        OutputCanvas.Children.Add(polygon.CanvasCircumCircle);
+        OutputCanvas.Children.Add(polygon.CanvasCircumcircle);
         OutputCanvas.Children.Add(polygon.CanvasPolygon);
+        OutputCanvas.Children.Add(polygon.CanvasPath);
     }
 
     protected async Task AddSegment(MapSegment segment) {
@@ -108,8 +112,8 @@ public class GeneratorBase {
     protected async Task RemovePolygon(MapPolygon polygon) {
         await Task.Delay(0);
 
-        OutputCanvas.Children.Remove(polygon.CanvasPolygon);
-        OutputCanvas.Children.Remove(polygon.CanvasCircumCircle);
+        OutputCanvas.Children.Remove(polygon.CanvasPath);
+        OutputCanvas.Children.Remove(polygon.CanvasCircumcircle);
 
         if (!MapPolygons.Remove(polygon)) {
             throw new InvalidOperationException("Polygon not found in MapPolygons");

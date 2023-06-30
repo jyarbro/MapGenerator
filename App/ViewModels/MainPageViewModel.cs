@@ -10,16 +10,16 @@ public class MainPageViewModel : ObservableRecipient {
     public int CanvasWidth { get; private set; }
     public int CanvasHeight { get; private set; }
 
-    DelaunayVoronoiGenerator DelaunayVoronoiGenerator { get; }
+    IGenerator Generator { get; }
     ILogger<MainPageViewModel> Log { get; }
 
     Canvas? OutputCanvas { get; set; }
 
     public MainPageViewModel(
-        DelaunayVoronoiGenerator delaunayVoronoiGenerator,
+        IGenerator generator,
         ILogger<MainPageViewModel> log
     ) {
-        DelaunayVoronoiGenerator = delaunayVoronoiGenerator;
+        Generator = generator;
         Log = log;
     }
 
@@ -37,8 +37,8 @@ public class MainPageViewModel : ObservableRecipient {
                                     new MapPoint(CanvasWidth, CanvasHeight),
                                     new MapPoint(CanvasWidth, 0));
 
-        await DelaunayVoronoiGenerator.Generate(30, border, OutputCanvas);
+        await Generator.Generate(30, border, OutputCanvas);
     }
 
-    public void Continue() => DelaunayVoronoiGenerator.Continue = true;
+    public void Continue() => Generator.Continue = true;
 }
