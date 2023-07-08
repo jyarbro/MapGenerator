@@ -41,6 +41,7 @@ public class MapPolygon : Polygon, IDisposable {
 
         // Construct the canvas path
         CanvasPath = new Microsoft.UI.Xaml.Shapes.Path {
+            Visibility = Visibility.Collapsed,
             Stroke = new SolidColorBrush(SubduedColor),
             StrokeThickness = SubduedSize
         };
@@ -103,11 +104,13 @@ public class MapPolygon : Polygon, IDisposable {
     }
 
     public void Subdue() {
+        CanvasPath.Visibility = Visibility.Visible;
         CanvasPath.Stroke = new SolidColorBrush(SubduedColor);
         CanvasPath.StrokeThickness = SubduedSize;
     }
 
     public void Highlight() {
+        CanvasPath.Visibility = Visibility.Visible;
         CanvasPath.Stroke = new SolidColorBrush(HighlightedColor);
         CanvasPath.StrokeThickness = HighlightedSize;
     }

@@ -22,6 +22,7 @@ public class MapPoint : Point {
     public MapPoint(MapPoint point) : this(point.X, point.Y) { }
     public MapPoint(double x, double y) : base(x, y) {
         CanvasPoint = new Microsoft.UI.Xaml.Shapes.Ellipse {
+            Visibility = Visibility.Collapsed,
             Fill = new SolidColorBrush(SubduedColor),
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
@@ -32,6 +33,7 @@ public class MapPoint : Point {
     }
 
     public void Highlight() {
+        CanvasPoint.Visibility = Visibility.Visible;
         CanvasPoint.Width = HighlightedSize;
         CanvasPoint.Height = HighlightedSize;
         CanvasPoint.Margin = new Thickness(X - 0.5 * HighlightedSize, Y - 0.5 * HighlightedSize, 0, 0);
@@ -40,6 +42,7 @@ public class MapPoint : Point {
     }
 
     public void HighlightAlt() {
+        CanvasPoint.Visibility = Visibility.Visible;
         CanvasPoint.Width = HighlightedSize;
         CanvasPoint.Height = HighlightedSize;
         CanvasPoint.Margin = new Thickness(X - 0.5 * HighlightedSize, Y - 0.5 * HighlightedSize, 0, 0);
@@ -48,6 +51,7 @@ public class MapPoint : Point {
     }
 
     public void Subdue() {
+        CanvasPoint.Visibility = Visibility.Visible;
         CanvasPoint.Width = SubduedSize;
         CanvasPoint.Height = SubduedSize;
 

@@ -61,6 +61,7 @@ public sealed partial class MainPage : Page {
             await Redraw();
         }
         catch (COMException exception) when (exception.Message.Contains("The object has been closed.")) { }
+        catch (COMException exception) when (exception.Message.Contains("Catastrophic failure")) { }
     }
 
     async void OnSizeChanged(object sender, SizeChangedEventArgs e) {

@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Diagnostics;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
 using Nrrdio.MapGenerator.Services;
@@ -32,12 +33,22 @@ public class MainPageViewModel : ObservableRecipient {
     public async Task Start() {
         Log.LogTrace(nameof(Start));
 
-        var border = new MapPolygon(new MapPoint(0, 0),
-                                    new MapPoint(0, CanvasHeight),
-                                    new MapPoint(CanvasWidth, CanvasHeight),
-                                    new MapPoint(CanvasWidth, 0));
+        Debug.Assert(OutputCanvas is not null);
 
-        await Generator.Generate(30, border, OutputCanvas);
+        var borderVertices = new[] {
+            new MapPoint(0, 0),
+            new MapPoint(0, CanvasHeight),
+            new MapPoint(CanvasWidth, CanvasHeight),
+            new MapPoint(CanvasWidth, 0)
+        };
+
+        Generator.Initialize(OutputCanvas);
+
+        var polygons = await Generator.GenerateWithReturn(30, borderVertices);
+
+        //foreach (var polygon in polygons) {
+        //    await Generator.Generate(10, polygon.Vertices.Cast<MapPoint>());
+        //}
     }
 
     public void Continue() => Generator.Continue = true;

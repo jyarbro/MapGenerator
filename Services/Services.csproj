@@ -1,22 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
-    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
-    <RootNamespace>Nrrdio.MapGenerator.Services</RootNamespace>
-    <RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
-    <UseWinUI>true</UseWinUI>
-    <AssemblyName>Nrrdio.MapGenerator.Services</AssemblyName>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net7.0-windows10.0.22621.0</TargetFramework>
+        <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+        <RootNamespace>Nrrdio.MapGenerator.Services</RootNamespace>
+        <RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
+        <UseWinUI>true</UseWinUI>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AssemblyName>Nrrdio.MapGenerator.Services</AssemblyName>
+    </PropertyGroup>
 
-  <ItemGroup>
-      <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
-      <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.3.230602002" />
-      <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.756" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
+        <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.3.230602002" />
+        <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.756" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Nrrdio.Utilities\Nrrdio.Utilities.Maths\Nrrdio.Utilities.Maths.csproj" />
-    <ProjectReference Include="..\Nrrdio.Utilities\Nrrdio.Utilities\Nrrdio.Utilities.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Nrrdio.Utilities\Nrrdio.Utilities.Maths\Nrrdio.Utilities.Maths.csproj" />
+        <ProjectReference Include="..\Nrrdio.Utilities\Nrrdio.Utilities\Nrrdio.Utilities.csproj" />
+    </ItemGroup>
 </Project>
