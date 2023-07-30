@@ -42,13 +42,24 @@ public class MainPageViewModel : ObservableRecipient {
             new MapPoint(CanvasWidth, 0)
         };
 
+        //var borderVertices = new[] {
+        //    new MapPoint(50, 25),
+        //    new MapPoint(35, 100),
+        //    new MapPoint(67, 250),
+        //    new MapPoint(90, 220),
+        //    new MapPoint(200, 30),
+        //    new MapPoint(180, 0)
+        //};
+
         Generator.Initialize(OutputCanvas);
 
-        var polygons = await Generator.GenerateWithReturn(30, borderVertices);
+        var polygons = await Generator.GenerateWithReturn(5, borderVertices);
 
-        //foreach (var polygon in polygons) {
-        //    await Generator.Generate(10, polygon.Vertices.Cast<MapPoint>());
-        //}
+        OutputCanvas.Children.Clear();
+
+        foreach (var polygon in polygons.ToList()) {
+            await Generator.Generate(5, polygon.Vertices.Cast<MapPoint>());
+        }
     }
 
     public void Continue() => Generator.Continue = true;

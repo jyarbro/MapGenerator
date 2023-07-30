@@ -1,14 +1,10 @@
 ﻿using Microsoft.UI;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Nrrdio.Utilities.Maths;
-using System.Collections.Generic;
 
-namespace Nrrdio.MapGenerator.Services.Models; 
+namespace Nrrdio.MapGenerator.Services.Models;
 public class MapPoint : Point {
-    public IList<MapPolygon> AdjacentMapPolygons { get; } = new List<MapPolygon>();
-    public IList<MapSegment> AdjacentMapSegments { get; } = new List<MapSegment>();
     public Microsoft.UI.Xaml.Shapes.Ellipse CanvasPoint { get; }
 
     Windows.UI.Color SubduedColor = Colors.Blue;
@@ -16,7 +12,7 @@ public class MapPoint : Point {
 
     Windows.UI.Color HighlightedColor = Colors.Red;
     Windows.UI.Color HighlightedAltColor = Colors.Orange;
-    const int HighlightedSize = 10;
+    const int HighlightedSize = 8;
 
     public MapPoint(Point point) : this(point.X, point.Y) { }
     public MapPoint(MapPoint point) : this(point.X, point.Y) { }
@@ -32,7 +28,7 @@ public class MapPoint : Point {
         };
     }
 
-    public void Highlight() {
+    public void ShowHighlighted() {
         CanvasPoint.Visibility = Visibility.Visible;
         CanvasPoint.Width = HighlightedSize;
         CanvasPoint.Height = HighlightedSize;
@@ -41,7 +37,7 @@ public class MapPoint : Point {
         CanvasPoint.Fill = new SolidColorBrush(HighlightedColor);
     }
 
-    public void HighlightAlt() {
+    public void ShowHighlightedAlt() {
         CanvasPoint.Visibility = Visibility.Visible;
         CanvasPoint.Width = HighlightedSize;
         CanvasPoint.Height = HighlightedSize;
@@ -50,17 +46,13 @@ public class MapPoint : Point {
         CanvasPoint.Fill = new SolidColorBrush(HighlightedAltColor);
     }
 
-    public void Subdue() {
+    public void ShowSubdued() {
         CanvasPoint.Visibility = Visibility.Visible;
         CanvasPoint.Width = SubduedSize;
         CanvasPoint.Height = SubduedSize;
 
         CanvasPoint.Fill = new SolidColorBrush(SubduedColor);
         CanvasPoint.Margin = new Thickness(X - 0.5 * SubduedSize, Y - 0.5 * SubduedSize, 0, 0);
-    }
-
-    public void Show() {
-        CanvasPoint.Visibility = Visibility.Visible;
     }
 
     public void Hide() {

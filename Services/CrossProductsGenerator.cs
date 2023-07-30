@@ -49,7 +49,7 @@ public class CrossProductsGenerator : GeneratorBase, IGenerator {
     MapPoint AddPoint(int x, int y) {
         var point = new MapPoint(x, y);
         AddPoint(point);
-        point.Subdue();
+        point.ShowSubdued();
 
         return point;
     }

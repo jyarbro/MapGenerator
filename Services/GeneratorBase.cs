@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Nrrdio.MapGenerator.Services.Models;
 using Nrrdio.Utilities.Maths;
 using System.Diagnostics;
+using Windows.UI.WebUI;
 
 namespace Nrrdio.MapGenerator.Services;
 public class GeneratorBase {
@@ -27,12 +28,15 @@ public class GeneratorBase {
     protected MapPolygon Border { get; set; }
     protected int PointCount { get; set; }
     protected bool Initialized { get; set; }
+    protected int Iteration { get; set; }
 
     public GeneratorBase(
         ILogger<GeneratorBase> log
     ) {
         Log = log;
-        Seed = Random.Next();
+        //Seed = Random.Next();
+        //Seed = 1335106969;
+        Seed = 1586145746;
     }
 
     public void Initialize(Canvas outputCanvas) {
@@ -41,7 +45,7 @@ public class GeneratorBase {
         Initialized = true;
     }
 
-    protected void GeneratePoints() {
+    protected async void GeneratePoints() {
         Log.LogTrace("Adding points");
 
         double pointX;
@@ -62,8 +66,9 @@ public class GeneratorBase {
             pointY = minY + Random.NextDouble() * rangeY;
             var point = new Point(pointX, pointY);
 
-            if (Border.Contains()) {
+            if (Border.Contains(point)) {
                 var mapPoint = new MapPoint(point);
+
                 AddPoint(mapPoint);
 
                 i++;
@@ -73,11 +78,20 @@ public class GeneratorBase {
         MapPoints = MapPoints.OrderBy(point => point.Y).ThenBy(point => point.X).Cast<MapPoint>().ToList();
     }
 
-    protected void AddPoint(MapPoint point) {
-        if (!MapPoints.Contains(point)) {
+    protected MapPoint AddPoint(Point point) => AddPoint(new MapPoint(point));
+    protected MapPoint AddPoint(MapPoint point) {
+        var existingPoint = MapPoints.FirstOrDefault(point.Equals);
+
+        if (existingPoint is null) {
             MapPoints.Add(point);
-            OutputCanvas.Children.Add(point.CanvasPoint);
+            existingPoint = point;
+
+            if (!OutputCanvas.Children.Contains(point.CanvasPoint)) {
+                OutputCanvas.Children.Add(point.CanvasPoint);
+            }
         }
+
+        return existingPoint;
     }
 
     protected void AddPolygon(MapPolygon polygon) {
@@ -86,9 +100,23 @@ public class GeneratorBase {
         OutputCanvas.Children.Add(polygon.CanvasCircumcircle);
         OutputCanvas.Children.Add(polygon.CanvasPolygon);
         OutputCanvas.Children.Add(polygon.CanvasPath);
+
+        foreach (var point in polygon.MapPoints) {
+            if (!OutputCanvas.Children.Contains(point.CanvasPoint)) {
+                OutputCanvas.Children.Add(point.CanvasPoint);
+            }
+        }
+
+        foreach (var segment in polygon.MapSegments) {
+            OutputCanvas.Children.Add(segment.CanvasPath);
+        }
     }
 
     protected MapSegment AddSegment(MapPoint point1, MapPoint point2) {
+        if (point1 == point2) {
+            throw new ArgumentException("The points must be different.");
+        }
+
         AddPoint(point1);
         AddPoint(point2);
 
@@ -117,11 +145,17 @@ public class GeneratorBase {
         OutputCanvas.Children.Remove(polygon.CanvasPath);
         OutputCanvas.Children.Remove(polygon.CanvasCircumcircle);
 
+        foreach (var point in polygon.MapPoints.Where(o => !MapPoints.Contains(o))) {
+            OutputCanvas.Children.Remove(point.CanvasPoint);
+        }
+
+        foreach (var segment in polygon.MapSegments.Where(o => !MapSegments.Contains(o))) {
+            OutputCanvas.Children.Remove(segment.CanvasPath);
+        }
+
         if (!MapPolygons.Remove(polygon)) {
             throw new InvalidOperationException("Polygon not found in MapPolygons");
         }
-
-        polygon.Dispose();
     }
 
     protected async Task ClearSegments() {
@@ -140,21 +174,17 @@ public class GeneratorBase {
         if (!MapSegments.Remove(segment)) {
             throw new InvalidOperationException("Segment not found in MapSegments");
         }
-
-        segment.Dispose();
     }
 
-    protected async Task ClearPoints() {
+    protected void ClearPoints() {
         foreach (var point in MapPoints.ToList()) {
-            await RemovePoint(point);
+            RemovePoint(point);
         }
 
         Debug.Assert(MapPoints.Count == 0);
     }
 
-    protected async Task RemovePoint(MapPoint point) {
-        await Task.Delay(0);
-
+    protected void RemovePoint(MapPoint point) {
         OutputCanvas.Children.Remove(point.CanvasPoint);
 
         var preCount = MapPoints.Count;
@@ -172,11 +202,11 @@ public class GeneratorBase {
         OutputCanvas.Children.Clear();
         ClearPolygons();
         await ClearSegments();
-        await ClearPoints();
+        ClearPoints();
     }
 
     protected async Task WaitForContinue() {
-        Log.LogInformation("Waiting to continue");
+        Log.LogInformation("Wait");
 
         Continue = false;
 

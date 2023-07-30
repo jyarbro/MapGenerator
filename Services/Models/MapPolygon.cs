@@ -2,41 +2,32 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Nrrdio.Utilities.Maths;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace Nrrdio.MapGenerator.Services.Models; 
-public class MapPolygon : Polygon, IDisposable {
-    public IEnumerable<MapPoint> MapPoints => Vertices.Cast<MapPoint>();
-    public IEnumerable<MapSegment> MapSegments => Edges.Cast<MapSegment>();
+namespace Nrrdio.MapGenerator.Services.Models;
+public class MapPolygon : Polygon {
+    public IList<MapPoint> MapPoints { get; init; }
+    public IList<MapSegment> MapSegments { get; init; } = new List<MapSegment>();
 
     public Microsoft.UI.Xaml.Shapes.Path CanvasPath { get; }
     public Microsoft.UI.Xaml.Shapes.Polygon CanvasPolygon { get; }
     public Microsoft.UI.Xaml.Shapes.Ellipse CanvasCircumcircle { get; }
 
-    Windows.UI.Color SubduedColor = Colors.LightSteelBlue;
-    const int SubduedSize = 2;
+    Windows.UI.Color SubduedColor = Colors.Blue;
+    Windows.UI.Color SubduedAltColor = Colors.Green;
+    const int SubduedSize = 1;
 
-    Windows.UI.Color HighlightedColor = Colors.Purple;
-    const int HighlightedSize = 6;
+    Windows.UI.Color HighlightedColor = Colors.LightSteelBlue;
+    Windows.UI.Color HighlightedColorAlt = Colors.Orange;
+    const int HighlightedSize = 3;
 
     public MapPolygon(params Point[] points) { throw new NotImplementedException("Points must be MapPoints"); }
     public MapPolygon(params MapPoint[] points) : this(points.AsEnumerable()) { }
     public MapPolygon(IEnumerable<MapPoint> points) : base(points) {
-        // Notify our neighbors that we've moved in next door.        
-        foreach (var vertex in Vertices.Cast<MapPoint>()) {
-            vertex.AdjacentMapPolygons.Add(this);
-        }
-
-        // Add edges
-        Edges.Clear();
-
-        var mapPoints = MapPoints.ToList();
+        MapPoints = new List<MapPoint>(points);
 
         for (var i = 0; i < VertexCount; i++) {
             var j = (i + 1) % VertexCount;
-            Edges.Add(new MapSegment(mapPoints[i], mapPoints[j]));
+            MapSegments.Add(new MapSegment(MapPoints[i], MapPoints[j]));
         }
 
         // Construct the canvas path
@@ -97,26 +88,38 @@ public class MapPolygon : Polygon, IDisposable {
         };
     }
 
-    public void Dispose() {
+    public void ShowPointsSubdued() {
         foreach (var point in MapPoints) {
-            point.AdjacentMapPolygons.Remove(this);
+            point.ShowSubdued();
         }
     }
 
-    public void Subdue() {
+    public void ShowSegmentsSubdued() {
+        foreach(var segment in MapSegments) {
+            segment.ShowSubdued();
+        }
+    }
+
+    public void ShowPathSubdued() {
         CanvasPath.Visibility = Visibility.Visible;
         CanvasPath.Stroke = new SolidColorBrush(SubduedColor);
         CanvasPath.StrokeThickness = SubduedSize;
     }
 
-    public void Highlight() {
+    public void ShowPathSubduedAlt() {
+        ShowPathSubdued();
+        CanvasPath.Stroke = new SolidColorBrush(SubduedAltColor);
+    }
+
+    public void ShowPathHighlighted() {
         CanvasPath.Visibility = Visibility.Visible;
         CanvasPath.Stroke = new SolidColorBrush(HighlightedColor);
         CanvasPath.StrokeThickness = HighlightedSize;
     }
 
-    public void ShowPath() {
-        CanvasPath.Visibility = Visibility.Visible;
+    public void ShowPathHighlightedAlt() {
+        ShowPathHighlighted();
+        CanvasPath.Stroke = new SolidColorBrush(HighlightedColorAlt);
     }
 
     public void HidePath() {
