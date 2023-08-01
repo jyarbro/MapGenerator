@@ -45,7 +45,7 @@ public class GeneratorBase {
         Initialized = true;
     }
 
-    protected async void GeneratePoints() {
+    protected void GeneratePoints() {
         Log.LogTrace("Adding points");
 
         double pointX;
@@ -68,8 +68,7 @@ public class GeneratorBase {
 
             if (Border.Contains(point)) {
                 var mapPoint = new MapPoint(point);
-
-                AddPoint(mapPoint);
+                AddPoint(ref mapPoint);
 
                 i++;
             }
@@ -78,25 +77,10 @@ public class GeneratorBase {
         MapPoints = MapPoints.OrderBy(point => point.Y).ThenBy(point => point.X).Cast<MapPoint>().ToList();
     }
 
-    protected MapPoint AddPoint(Point point) => AddPoint(new MapPoint(point));
-    protected MapPoint AddPoint(MapPoint point) {
-        var existingPoint = MapPoints.FirstOrDefault(point.Equals);
-
-        if (existingPoint is null) {
-            MapPoints.Add(point);
-            existingPoint = point;
-
-            if (!OutputCanvas.Children.Contains(point.CanvasPoint)) {
-                OutputCanvas.Children.Add(point.CanvasPoint);
-            }
-        }
-
-        return existingPoint;
-    }
-
+    #region Polygons
     protected void AddPolygon(MapPolygon polygon) {
         MapPolygons.Add(polygon);
-        
+
         OutputCanvas.Children.Add(polygon.CanvasCircumcircle);
         OutputCanvas.Children.Add(polygon.CanvasPolygon);
         OutputCanvas.Children.Add(polygon.CanvasPath);
@@ -112,24 +96,12 @@ public class GeneratorBase {
         }
     }
 
-    protected MapSegment AddSegment(MapPoint point1, MapPoint point2) {
-        if (point1 == point2) {
-            throw new ArgumentException("The points must be different.");
+    protected void HidePolygons() {
+        foreach (var polygon in MapPolygons.ToList()) {
+            polygon.HideCircumcircle();
+            polygon.HidePath();
+            polygon.HidePolygon();
         }
-
-        AddPoint(point1);
-        AddPoint(point2);
-
-        // Don't look for reverse, because we need to add reverse segments later
-        var segment = MapSegments.FirstOrDefault(o => o.Point1 == point1 && o.Point2 == point2);
-
-        if (segment is null) {
-            segment = new MapSegment(point1, point2);
-            MapSegments.Add(segment);
-            OutputCanvas.Children.Add(segment.CanvasPath);
-        }
-
-        return segment;
     }
 
     protected void ClearPolygons() {
@@ -156,23 +128,72 @@ public class GeneratorBase {
         if (!MapPolygons.Remove(polygon)) {
             throw new InvalidOperationException("Polygon not found in MapPolygons");
         }
+    } 
+    #endregion
+
+    #region Segments
+    protected MapSegment AddSegment(MapPoint point1, MapPoint point2) {
+        if (point1 == point2) {
+            throw new ArgumentException("The points must be different.");
+        }
+
+        AddPoint(ref point1);
+        AddPoint(ref point2);
+
+        // Don't look for reverse, because we need to add reverse segments later
+        var segment = MapSegments.FirstOrDefault(o => o.Point1 == point1 && o.Point2 == point2);
+
+        if (segment is null) {
+            segment = new MapSegment(point1, point2);
+            MapSegments.Add(segment);
+            OutputCanvas.Children.Add(segment.CanvasPath);
+        }
+
+        return segment;
     }
 
-    protected async Task ClearSegments() {
+    protected void HideSegments() {
         foreach (var segment in MapSegments.ToList()) {
-            await RemoveSegment(segment);
+            segment.Hide();
+        }
+    }
+
+    protected void ClearSegments() {
+        foreach (var segment in MapSegments.ToList()) {
+            RemoveSegment(segment);
         }
 
         Debug.Assert(MapSegments.Count == 0);
     }
 
-    protected async Task RemoveSegment(MapSegment segment) {
-        await Task.Delay(0);
-
+    protected void RemoveSegment(MapSegment segment) {
         OutputCanvas.Children.Remove(segment.CanvasPath);
 
         if (!MapSegments.Remove(segment)) {
             throw new InvalidOperationException("Segment not found in MapSegments");
+        }
+    }
+    #endregion
+
+    #region Points
+    protected void AddPoint(ref MapPoint point) {
+        var existingPoint = MapPoints.FirstOrDefault(point.Equals);
+
+        if (existingPoint is null) {
+            MapPoints.Add(point);
+
+            if (!OutputCanvas.Children.Contains(point.CanvasPoint)) {
+                OutputCanvas.Children.Add(point.CanvasPoint);
+            }
+        }
+        else {
+            point = existingPoint;
+        }
+    }
+
+    protected void HidePoints() {
+        foreach (var point in MapPoints.ToList()) {
+            point.Hide();
         }
     }
 
@@ -196,17 +217,19 @@ public class GeneratorBase {
         Debug.Assert(preCount == MapPoints.Count + 1);
     }
 
-    protected async Task Clear() {
+    #endregion
+    
+    protected void Clear() {
         Log.LogTrace("Clearing memory");
-        
-        OutputCanvas.Children.Clear();
+
+        //OutputCanvas.Children.Clear();
         ClearPolygons();
-        await ClearSegments();
+        ClearSegments();
         ClearPoints();
     }
 
     protected async Task WaitForContinue() {
-        Log.LogInformation("Wait");
+        //Log.LogInformation("Wait");
 
         Continue = false;
 

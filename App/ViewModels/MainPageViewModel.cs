@@ -55,8 +55,6 @@ public class MainPageViewModel : ObservableRecipient {
 
         var polygons = await Generator.GenerateWithReturn(5, borderVertices);
 
-        OutputCanvas.Children.Clear();
-
         foreach (var polygon in polygons.ToList()) {
             await Generator.Generate(5, polygon.Vertices.Cast<MapPoint>());
         }
