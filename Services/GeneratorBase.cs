@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml.Controls;
 using Nrrdio.MapGenerator.Services.Models;
 using Nrrdio.Utilities.Maths;
 using System.Diagnostics;
-using Windows.UI.WebUI;
 
 namespace Nrrdio.MapGenerator.Services;
 public class GeneratorBase {
@@ -34,9 +33,9 @@ public class GeneratorBase {
         ILogger<GeneratorBase> log
     ) {
         Log = log;
-        //Seed = Random.Next();
+        Seed = Random.Next();
         //Seed = 1335106969;
-        Seed = 1586145746;
+        //Seed = 1586145746;
     }
 
     public void Initialize(Canvas outputCanvas) {
@@ -218,15 +217,6 @@ public class GeneratorBase {
     }
 
     #endregion
-    
-    protected void Clear() {
-        Log.LogTrace("Clearing memory");
-
-        //OutputCanvas.Children.Clear();
-        ClearPolygons();
-        ClearSegments();
-        ClearPoints();
-    }
 
     protected async Task WaitForContinue() {
         //Log.LogInformation("Wait");

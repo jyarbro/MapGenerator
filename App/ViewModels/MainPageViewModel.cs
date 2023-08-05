@@ -51,12 +51,26 @@ public class MainPageViewModel : ObservableRecipient {
         //    new MapPoint(180, 0)
         //};
 
+        //var borderVertices = new[] {
+        //    new MapPoint(0, 586.20208011469538),
+        //    new MapPoint(0, 540.45522244492906),
+        //    new MapPoint(45.564302332641176, 588.21774812470164),
+        //    new MapPoint(42.506090064673486, 600),
+        //    new MapPoint(39.215674831520815, 600),
+        //};
+
         Generator.Initialize(OutputCanvas);
 
         var polygons = await Generator.GenerateWithReturn(5, borderVertices);
+        var nestedPolygons = new List<MapPolygon>();
 
         foreach (var polygon in polygons.ToList()) {
-            await Generator.Generate(5, polygon.Vertices.Cast<MapPoint>());
+            var result = await Generator.GenerateWithReturn(5, polygon.Vertices.Cast<MapPoint>());
+            nestedPolygons.AddRange(result);
+        }
+
+        foreach (var polygon in nestedPolygons) {
+            await Generator.GenerateWithReturn(5, polygon.Vertices.Cast<MapPoint>());
         }
     }
 
