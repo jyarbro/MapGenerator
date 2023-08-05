@@ -1,0 +1,6 @@
+GetDpiForWindow
+SetWindowPos
+SetWindowPosFlags
+SpecialWindowHandles
+HWND_TOP
+SWP_NOMOVE
