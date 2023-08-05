@@ -4,7 +4,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using Nrrdio.MapGenerator.App.Contracts.Services;
 using Nrrdio.MapGenerator.App.Helpers;
-using Nrrdio.MapGenerator.App.Views;
 using Nrrdio.Utilities.WinUI;
 
 namespace Nrrdio.MapGenerator.App.ViewModels;

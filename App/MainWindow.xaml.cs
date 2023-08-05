@@ -44,6 +44,7 @@ public sealed partial class MainWindow : Window {
 
     /// <summary>
     /// Source: https://github.com/microsoft/WinUI-3-Demos/blob/master/src/Build2020Demo/DemoBuildCs/DemoBuildCs/DemoBuildCs/App.xaml.cs#L28
+    /// Updated to use https://github.com/Microsoft/CsWin32
     /// </summary>
     void SetWindowSize(int width, int height) {
         var windowHandle = new HWND(WindowHandle);

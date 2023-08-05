@@ -2,7 +2,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Nrrdio.Utilities.Maths;
-using System.Diagnostics;
 
 namespace Nrrdio.MapGenerator.Services.Models;
 public class MapSegment : Segment {
