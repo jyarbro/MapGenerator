@@ -15,8 +15,6 @@ public class CrossProductsGenerator : GeneratorBase, IGenerator {
         
         Log.LogTrace(nameof(Generate));
 
-        Clear();
-
         Border = new MapPolygon(borderVertices);
 
         var point1 = AddPoint(5, 10);
