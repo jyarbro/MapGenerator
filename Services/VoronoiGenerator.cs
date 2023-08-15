@@ -21,6 +21,8 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
     public async Task<IEnumerable<MapPolygon>> GenerateWithReturn(int points, IEnumerable<MapPoint> borderVertices) {
         Log.LogTrace(nameof(Generate));
 
+        await Task.Delay(10);
+
         var debug = false;
 
         if (!Initialized) {
@@ -72,9 +74,6 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
         await Task.Delay(10);
 
-        Log.LogInformation($"Total polygons: {MapPolygons.Count}");
-        Log.LogInformation("Done");
-
         return MapPolygons;
     }
 
@@ -104,10 +103,12 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         var debug = false;
         //var debug = Iteration > 1;
 
-        var debugDelay = 100;
+        var debugDelay = 10;
+        var debugWait = false;
 
         if (debug) {
             Log.LogInformation($"Debugging {nameof(AddBorderTriangles)}");
+            if (debugWait) await WaitForContinue();
         }
 
         var borderVertices = Border.Vertices.Count;
@@ -115,10 +116,12 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
         var centroid = new MapPoint(Border.Centroid);
         AddPoint(ref centroid);
-        centroid.ShowHighlighted();
 
         if (debug) {
+            centroid.ShowHighlighted();
+
             await Task.Delay(debugDelay);
+            if (debugWait) await WaitForContinue();
         }
 
         var borderPoints = Border.MapPoints.ToList();
@@ -128,20 +131,22 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
             var triangle = new MapPolygon(centroid, borderPoints[i], borderPoints[j]);
             AddPolygon(triangle);
-            triangle.ShowPathSubdued();
-
+    
             var point = borderPoints[i];
             AddPoint(ref point);
-            point.ShowSubdued();
 
             if (debug) {
+                triangle.ShowPathSubdued();
+                point.ShowSubdued();
+
                 await Task.Delay(debugDelay);
+                if (debugWait) await WaitForContinue();
             }
         }
 
         if (debug) {
             Log.LogInformation($"Done {nameof(AddBorderTriangles)}");
-            await WaitForContinue();
+            if (debugWait) await WaitForContinue();
         }
 
         if (clearCanvas) {
@@ -158,39 +163,45 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         //var debug = Iteration == 8;
 
         var debugDelay = 10;
+        var debugWait = false;
 
         if (debug) {
             Log.LogInformation($"Debugging {nameof(AddDelaunayTriangles)}");
-            
-            //await WaitForContinue();
 
             foreach (var polygon in MapPolygons) {
                 polygon.ShowPathSubdued();
             }
+
+            if (debugWait) await WaitForContinue();
         }
 
         foreach (var mapPoint in MapPoints.ToList()) {
-            mapPoint.ShowHighlighted();
+            if (debug) {
+                mapPoint.ShowHighlighted();
+            }
 
             var badTriangles = new List<MapPolygon>();
 
             foreach (var polygon in MapPolygons) {
-                polygon.ShowCircumcircle();
-
                 if (polygon.Circumcircle.Contains(mapPoint)) {
                     badTriangles.Add(polygon);
 
-                    foreach (var segment in polygon.MapSegments) {
-                        segment.ShowHighlighted();
+                    if (debug) {
+                        foreach (var segment in polygon.MapSegments) {
+                            segment.ShowHighlighted();
+                        }
                     }
                 }
 
                 if (debug) {
                     await Task.Delay(debugDelay);
-                    //await WaitForContinue();
+                    
+                    if (debugWait) {
+                        polygon.ShowCircumcircle();
+                        await WaitForContinue();
+                        polygon.HideCircumcircle();
+                    }
                 }
-
-                polygon.HideCircumcircle();
             }
 
             var holeBoundaries = badTriangles.SelectMany(polygon => polygon.MapSegments).ToList();
@@ -208,7 +219,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                             conflict.ShowHighlightedRand();
 
                             await Task.Delay(debugDelay);
-                            //await WaitForContinue();
+                            if (debugWait) await WaitForContinue();
                         }
 
                         holeBoundaries.Remove(conflict);
@@ -216,8 +227,9 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 }
             }
 
-            // DEGENERATE - Edge contains point - A solution may involve splitting the edge at the point.
-            Debug.Assert(!holeBoundaries.Any(edge => edge.Contains(mapPoint) && mapPoint != edge.Point1 && mapPoint != edge.Point2));
+            Debug.Assert(!holeBoundaries.Any(edge => edge.Contains(mapPoint) && mapPoint != edge.Point1 && mapPoint != edge.Point2),
+                $"Degenerate case.\nSeed: {Seed}\nIteration: {Iteration}",
+                "Edge contains point. A solution may involve splitting the edge at the point.");
 
             try {
                 var holeVertices = await ArrangeHoleBoundaries();
@@ -234,11 +246,12 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                     if (holeVertices[i] != mapPoint && holeVertices[j] != mapPoint) {
                         var polygon = new MapPolygon(mapPoint, holeVertices[i], holeVertices[j]);
                         AddPolygon(polygon);
-                        polygon.ShowPathSubdued();
 
                         if (debug) {
+                            polygon.ShowPathSubdued();
+
                             await Task.Delay(debugDelay);
-                            //await WaitForContinue();
+                            if (debugWait) await WaitForContinue();
                         }
                     }
                 }
@@ -261,6 +274,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 while (copy.Count > 0) {
                     var nextSegments = copy.Where(o => o.EndPoints.Contains(nextPoint)).ToList();
 
+                    // Why did I not write a note to myself about this????
                     if (nextSegments.Count != 1) {
                         Log.LogInformation($"Degenerate case.\nSeed: {Seed}\nIteration: {Iteration}");
                         throw new InvalidOperationException("Degenerate case");
@@ -277,13 +291,14 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 return vertices.Cast<MapPoint>().ToList();
             }
 
-            mapPoint.Hide();
+            if (debug) {
+                mapPoint.Hide();
+            }
         }
 
         if (debug) {
             Log.LogInformation($"Done {nameof(AddDelaunayTriangles)}");
-            //await WaitForContinue();
-            OutputCanvas.Children.Remove(Border.CanvasPath);
+            if (debugWait) await WaitForContinue();
         }
 
         if (clearCanvas) {
@@ -297,15 +312,17 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         var debug = false;
         //var debug = Iteration == 8;
 
-        var debugDelay = 10;
+        var debugDelay = 100;
+        var debugWait = false;
 
         if (debug) {
             Log.LogInformation($"Debugging {nameof(AddVoronoiEdgesFromCircumcircles)}");
-            //await WaitForContinue();
-        }
 
-        foreach (var polygon in MapPolygons) {
-            polygon.ShowPathSubdued();
+            foreach (var polygon in MapPolygons) {
+                polygon.ShowPathSubdued();
+            }
+
+            if (debugWait) await WaitForContinue();
         }
 
         ClearPoints();
@@ -316,16 +333,21 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
             }
 
             foreach (var edge in polygon.MapSegments) {
-                edge.ShowHighlighted();
-
                 if (debug) {
+                    edge.ShowHighlighted();
+
                     await Task.Delay(debugDelay);
                 }
 
                 var neighbors = MapPolygons.Where(o => polygon != o && o.Edges.Any(oe => (edge.EndPoints.Contains(oe.Point1) && edge.EndPoints.Contains(oe.Point2)))).ToList();
 
-                // Edges should never have more than 1 neighbor.
-                Debug.Assert(neighbors.Count <= 1);
+                if (neighbors.Count > 1) {
+                    Log.LogInformation($"Degenerate case.\nSeed: {Seed}\nIteration: {Iteration}");
+                    await WaitForContinue();
+                }
+
+                //Debug.Assert(neighbors.Count <= 1,
+                //    "Edges should never have more than 1 neighbor.");
 
                 var neighbor = neighbors.FirstOrDefault();
 
@@ -357,23 +379,23 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
                 if (segment is null) {
                     segment = AddSegment(point1, point2);
-                    segment.ShowHighlightedRand();
 
                     if (debug) {
+                        segment.ShowHighlightedRand();
+
                         await Task.Delay(debugDelay);
-                        //await WaitForContinue();
+                        if (debugWait) await WaitForContinue();
                     }
                 }
 
-                if (neighbor is not null) {
-                    neighbor.ShowPathSubdued();
-
-                    if (debug) {
+                if (debug) {
+                    if (neighbor is not null) {
+                        neighbor.ShowPathSubdued();
                         neighbor.HideCircumcircle();
                     }
-                }
 
-                edge.Hide();
+                    edge.Hide();
+                }
             }
 
             if (debug) {
@@ -382,24 +404,22 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         }
 
         if (debug) {
-            //await WaitForContinue();
-        }
+            if (debugWait) await WaitForContinue();
 
-        foreach (var point in MapPoints) {
-            point.Hide();
-        }
+            foreach (var point in MapPoints) {
+                point.Hide();
+            }
 
-        foreach (var segment in MapSegments) {
-            segment.ShowSubdued();
-        }
+            foreach (var segment in MapSegments) {
+                segment.ShowSubdued();
+            }
 
-        foreach (var polygon in MapPolygons) {
-            polygon.HidePath();
-        }
+            foreach (var polygon in MapPolygons) {
+                polygon.HidePath();
+            }
 
-        if (debug) {
             Log.LogInformation($"Done {nameof(AddVoronoiEdgesFromCircumcircles)}");
-            //await WaitForContinue();
+            if (debugWait) await WaitForContinue();
         }
 
         if (clearCanvas) {
@@ -411,18 +431,21 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         Log.LogTrace("Adding missing voronoi edges");
 
         var debug = false;
-        //var debug = Iteration == 8;
+        //var debug = Iteration == 22;
 
-        var debugDelay = 10;
+        var debugDelay = 200;
+        var debugWait = false;
 
         if (debug) {
             Log.LogInformation($"Debugging {nameof(AddMissingVoronoiEdges)}");
-            //await WaitForContinue();
+
+            foreach (var segment in MapSegments) {
+                segment.ShowSubdued();
+            }
+
+            if (debugWait) await WaitForContinue();
         }
 
-        foreach (var segment in MapSegments) {
-            segment.ShowSubdued();
-        }
 
         foreach (var point in MapPoints.ToList()) {
             // Ignore points outside of the border because those are healthy extremes.
@@ -436,22 +459,25 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 continue;
             }
 
-            point.ShowHighlighted();
-
             if (debug) {
-                //await WaitForContinue();
+                point.ShowHighlighted();
+
+                if (debugWait) await WaitForContinue();
             }
 
             foreach (var polygon in MapPolygons) {
-                polygon.ShowCircumcircle();
-
                 if (debug) {
+                    polygon.ShowCircumcircle();
+
                     await Task.Delay(debugDelay);
-                    //await WaitForContinue();
+                    if (debugWait) await WaitForContinue();
                 }
 
                 if (polygon.Circumcircle.Center.Equals(point)) {
-                    polygon.ShowPathHighlighted();
+                    if (debug) {
+                        polygon.ShowPathHighlighted();
+                        if (debugWait) await WaitForContinue();
+                    }
 
                     var segment = polygon.MapSegments.First(o1 => Border.MapSegments.Any(o2 => o2.Intersects(o1).IntersectionEnd is not null));
 
@@ -483,24 +509,27 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                     }
 
                     var bisector = AddSegment(new MapPoint(startX, startY), new MapPoint(endX, endY));
-                    bisector.ShowSubdued();
 
                     if (debug) {
-                        await Task.Delay(debugDelay);
-                        //await WaitForContinue();
-                    }
+                        bisector.ShowSubdued();
 
-                    polygon.HidePath();
+                        await Task.Delay(debugDelay);
+                        if (debugWait) await WaitForContinue();
+
+                        polygon.HidePath();
+                    }
                 }
 
-                polygon.HideCircumcircle();
+                if (debug) {
+                    polygon.HideCircumcircle();
+                }
             }
 
             if (debug) {
-                //await WaitForContinue();
-            }
+                if (debugWait) await WaitForContinue();
 
-            point.Hide();
+                point.Hide();
+            }
         }
 
         ClearPolygons();
@@ -508,7 +537,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
         if (debug) {
             Log.LogInformation($"Done {nameof(AddMissingVoronoiEdges)}");
-            //await WaitForContinue();
+            if (debugWait) await WaitForContinue();
         }
 
         if (clearCanvas) {
@@ -519,33 +548,39 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
     async Task ChopBorder(bool clearCanvas = true) {
         Log.LogTrace("Chopping borders");
 
-        var debug = false;
-        //var debug = Iteration == 8;
+        //var debug = false;
+        var debug = Iteration == 16;
 
         var debugDelay = 10;
+        var debugWait = false;
 
         if (debug) {
             Log.LogInformation($"Debugging {nameof(ChopBorder)}");
-            //await WaitForContinue();
-        }
+            
+            foreach (var segment in MapSegments) {
+                segment.ShowSubdued();
+            }
 
-        foreach (var segment in MapSegments) {
-            segment.ShowSubdued();
+            if (debugWait) await WaitForContinue();
         }
 
         // Find all segments where at least one point lies outside of the borders
         var externalSegments = MapSegments.Where(segment => !Border.Contains(segment.Point1) || !Border.Contains(segment.Point2) || Border.MapSegments.Any(o => o.Intersects(segment).Intersects)).ToList();
 
         foreach (var borderEdge in Border.MapSegments) {
+            if (debug) {
+                borderEdge.ShowHighlightedAlt();
+            }
+
             var borderPoints = new List<MapPoint> {
                 borderEdge.MapPoint1,
                 borderEdge.MapPoint2,
             };
 
             foreach (var segment in externalSegments) {
-                segment.ShowHighlighted();
-
                 if (debug) {
+                    segment.ShowHighlighted();
+
                     await Task.Delay(debugDelay);
                 }
 
@@ -562,12 +597,18 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                     // The line begins within the border
                     if (Border.Contains(segment.Point1) && segment.MapPoint1 != borderIntersect) {
                         var newSegment = AddSegment(segment.MapPoint1, borderIntersect);
-                        newSegment.ShowHighlightedRand();
+
+                        if (debug) {
+                            newSegment.ShowHighlightedRand();
+                        }
                     }
                     // The line ends within the border
                     else if (Border.Contains(segment.Point2)) {
                         var newSegment = AddSegment(borderIntersect, segment.MapPoint2);
-                        newSegment.ShowHighlightedRand();
+
+                        if (debug) {
+                            newSegment.ShowHighlightedRand();
+                        }
                     }
                     // The line cross over the border but starts and stops outside of it.
                     else {
@@ -584,31 +625,39 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
                             if (otherIntersect.Intersects && !part1.EndPoints.Contains(otherIntersect.Intersection)) {
                                 var newSegment = AddSegment(borderIntersect, new MapPoint(otherIntersect.Intersection));
-                                newSegment.ShowHighlightedRand();
+                                
+                                if (debug) {
+                                    newSegment.ShowHighlightedRand();
+                                }
                             }
 
                             otherIntersect = part2.Intersects(otherBorder);
 
                             if (otherIntersect.Intersects && !part2.EndPoints.Contains(otherIntersect.Intersection)) {
                                 var newSegment = AddSegment(borderIntersect, new MapPoint(otherIntersect.Intersection));
-                                newSegment.ShowHighlightedRand();
+                            
+                                if (debug) {
+                                    newSegment.ShowHighlightedRand();
+                                }
                             }
                         }
                     }
 
                     if (debug) {
                         await Task.Delay(debugDelay);
+                        if (debugWait) await WaitForContinue();
                     }
                 }
 
-                segment.ShowSubdued();
-
                 if (debug) {
+                    segment.ShowSubdued();
+
                     await Task.Delay(debugDelay);
+                    if (debugWait) await WaitForContinue();
                 }
             }
 
-            borderPoints = borderPoints.OrderBy(p => p.Y).ThenBy(p => p.X).ToList();
+            borderPoints = borderPoints.OrderBy(o => (o - borderEdge.Point1).Magnitude).ToList();
 
             // Add new segments across the border between all the intersections, creating a
             // multi-part border.
@@ -617,26 +666,32 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 var j = (i + 1) % borderPoints.Count;
 
                 var newSegment = AddSegment(borderPoints[i], borderPoints[j]);
-                newSegment.ShowSubdued();
 
                 if (debug) {
+                    newSegment.ShowSubdued();
+
                     await Task.Delay(debugDelay);
+                    if (debugWait) await WaitForContinue();
                 }
             }
-        }
 
-        foreach (var segment in MapSegments) {
-            segment.ShowSubdued();
+            if (debug) {
+                borderEdge.Hide();
+            }
         }
 
         externalSegments = MapSegments.Where(segment => !Border.Contains(segment.Point1) || !Border.Contains(segment.Point2)).ToList();
 
         if (debug) {
+            foreach (var segment in MapSegments) {
+                segment.ShowSubdued();
+            }
+
             foreach (var segment in externalSegments) {
                 segment.ShowHighlighted();
             }
 
-            //await WaitForContinue();
+            if (debugWait) await WaitForContinue();
         }
 
         // Remove all the segments that have at least 1 point outside of the border
@@ -645,6 +700,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
             if (debug) {
                 await Task.Delay(debugDelay);
+                if (debugWait) await WaitForContinue();
             }
         }
 
@@ -659,7 +715,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
             }
 
             Log.LogInformation($"Done {nameof(ChopBorder)}");
-            //await WaitForContinue();
+            if (debugWait) await WaitForContinue();
         }
 
         if (clearCanvas) {
@@ -670,18 +726,20 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
     async Task FixBorderWinding(bool clearCanvas = true) {
         Log.LogTrace("Fixing border winding");
 
-        var debug = false;
-        //var debug = Iteration == 8;
+        //var debug = false;
+        var debug = Iteration == 16;
 
-        var debugDelay = 10;
+        var debugDelay = 200;
         var debugWait = false;
 
         if (debug) {
             Log.LogInformation($"Debugging {nameof(FixBorderWinding)}");
-        }
 
-        foreach (var segment in MapSegments) {
-            segment.ShowSubdued();
+            foreach (var segment in MapSegments) {
+                segment.ShowSubdued();
+            }
+
+            if (debugWait) await WaitForContinue();
         }
 
         var borderStartPotential = Border.MapSegments.OrderBy(o => o.Point1.Y).ThenBy(o => o.Point1.X).ToList();
@@ -689,34 +747,56 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         var borderStart = borderStartPotential[0];
         var otherBorderSegment = borderStartPotential[1];
 
-        // ERASE THIS. I THINK ITS FIXED NOW BECAUSE I CHECK WINDING AT THE BEGINNING.
-        //// DEGENERATE: The two lowest segments form a V and share the same starting point, so take the segment on the left.
-        //if (borderStartPotential[0].Point1.X == borderStartPotential[1].Point1.X && 
-        //    borderStartPotential[0].Point2.X > borderStartPotential[1].Point2.X) {
+        if (debug) {
+            foreach (var borderSegment in Border.MapSegments) {
+                borderSegment.ShowHighlighted();
+            }
 
-        //    borderStart = borderStartPotential[1];
-        //    otherBorderSegment = borderStartPotential[0];
-        //}
+            borderStart.ShowHighlightedAlt();
+            await Task.Delay(10);
+        }
 
-        var currentSegment = MapSegments.Where(o => o.EndPoints.Contains(borderStart.MapPoint1) && o.Intersects(borderStart).IntersectionEnd is not null).First();
-        var startPoint = currentSegment.MapPoint1;
+        MapSegment? currentSegment = null;
+
+        if (debug) {
+            foreach (var segment in MapSegments.Where(o => o.EndPoints.Contains(borderStart.MapPoint1))) {
+                segment.ShowHighlightedRand();
+
+                await Task.Delay(10);
+
+                var intersects = segment.Intersects(borderStart);
+
+                if (intersects.IntersectionEnd is not null) {
+                    currentSegment = segment;
+                    break;
+                }
+
+                segment.ShowSubdued();
+            }
+        }
+        else {
+            currentSegment = MapSegments.Where(o => o.EndPoints.Contains(borderStart.MapPoint1) && o.Intersects(borderStart).IntersectionEnd is not null).First();
+        }
+
+        //var currentSegment = MapSegments.Where(o => o.EndPoints.Contains(borderStart.MapPoint1) && o.Intersects(borderStart).IntersectionEnd is not null).First();
+        var startPoint = currentSegment!.MapPoint1;
 
         if (currentSegment.Point1 == otherBorderSegment.Point1 || currentSegment.Point2 == otherBorderSegment.Point2) {
             currentSegment = FlipSegment(currentSegment);
             startPoint = currentSegment.MapPoint1;
         }
 
-        startPoint.ShowHighlighted();
-
         if (debug) {
+            startPoint.ShowHighlighted();
+
             await Task.Delay(debugDelay);
             if (debugWait) await WaitForContinue();
         }
 
         while (true) {
-            currentSegment.ShowHighlightedRand();
-
             if (debug) {
+                currentSegment.ShowHighlightedRand();
+
                 await Task.Delay(debugDelay);
                 if (debugWait) await WaitForContinue();
             }
@@ -725,22 +805,24 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 o.EndPoints.Contains(currentSegment.Point2) && !o.EndPoints.Contains(currentSegment.Point1)
             ).ToList();
 
-            foreach (var otherSegment in otherSegments) {
-                otherSegment.ShowHighlighted();
-            }
-
             if (debug) {
+                foreach (var otherSegment in otherSegments) {
+                    otherSegment.ShowHighlighted();
+                }
+
                 await Task.Delay(debugDelay);
+                if (debugWait) await WaitForContinue();
             }
 
             var nextSegment = currentSegment;
-            var bestAngle = float.MaxValue;
+            var bestAngle = double.MaxValue;
 
             foreach (var otherSegment in otherSegments.ToList()) {
-                otherSegment.ShowHighlightedAlt();
-
                 if (debug) {
+                    otherSegment.ShowHighlightedAlt();
+
                     await Task.Delay(debugDelay);
+                    if (debugWait) await WaitForContinue();
                 }
 
                 var farPoint = otherSegment.Point2;
@@ -751,11 +833,12 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                     alignedOtherSegment = FlipSegment(otherSegment);
                     otherSegments.Add(alignedOtherSegment);
 
-                    alignedOtherSegment.ShowHighlightedAlt();
-
                     if (debug) {
+                        alignedOtherSegment.ShowHighlightedAlt();
+
                         Log.LogInformation("Flipping segment");
                         await Task.Delay(debugDelay);
+                        if (debugWait) await WaitForContinue();
                     }
 
                     farPoint = alignedOtherSegment.Point2;
@@ -781,6 +864,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
                 if (debug) {
                     alignedOtherSegment.ShowHighlighted();
+
                     await Task.Delay(debugDelay);
                     if (debugWait) await WaitForContinue();
                 }
@@ -807,9 +891,9 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         if (debug) {
             Log.LogInformation($"Done {nameof(FixBorderWinding)}");
             if (debugWait) await WaitForContinue();
-        }
 
-        startPoint.Hide();
+            startPoint.Hide();
+        }
 
         if (clearCanvas) {
             ClearCanvasArtifacts();
@@ -828,18 +912,21 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
     async Task FindPolygons() {
         Log.LogTrace("Finding polygons");
 
-        var debug = false;
-        //var debug = Iteration == 8;
+        //var debug = false;
+        var debug = Iteration == 16;
 
         var debugDelay = 100;
+        var debugWait = true;
 
         if (debug) {
             Log.LogInformation($"Debugging {nameof(FindPolygons)}");
-            //await WaitForContinue();
-        }
+            if (debugWait) await WaitForContinue();
 
-        foreach (var segment in MapSegments) {
-            segment.ShowSubdued();
+            foreach (var segment in MapSegments) {
+                segment.ShowSubdued();
+            }
+
+            await Task.Delay(10);
         }
 
         var nonBorderSegments = MapSegments.Where(o1 => Border.MapSegments.All(o2 => o1.Intersects(o2).IntersectionEnd is null)).ToList();
@@ -847,9 +934,26 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         // Add the reverse of all segments except on borders
         foreach (var segment in nonBorderSegments) {
             AddSegment(segment.MapPoint2, segment.MapPoint1);
+
+            if (debug) {
+                segment.ShowHighlightedRand();
+                await Task.Delay(debugDelay);
+                if (debugWait) await WaitForContinue();
+            }
+        }
+
+        if (debug) {
+            foreach (var segment in nonBorderSegments) {
+                segment.ShowSubdued();
+            }
         }
 
         while (MapSegments.Any()) {
+            // Testing the final polygon
+            //if (MapSegments.Count < 17) {
+            //    debugWait = true;
+            //}
+
             var currentSegment = MapSegments.First();
             var polygonSegments = new List<MapSegment>();
 
@@ -870,22 +974,17 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
                 if (debug) {
                     await Task.Delay(debugDelay);
-                    //await WaitForContinue();
+                    if (debugWait) await WaitForContinue();
                 }
             }
 
-            if (debug) {
-                //await WaitForContinue();
-            }
-
             if (polygonVertices.Count < 3) {
-                Log.LogInformation("BAD SITUATION");
-                Log.LogInformation($"Iteration {Iteration}");
-                Log.LogInformation($"Seed {Seed}");
+                Log.LogInformation($"Degenerate case.\nSeed: {Seed}\nIteration: {Iteration}");
                 await WaitForContinue();
             }
 
-            Debug.Assert(polygonVertices.Count >= 3);
+            Debug.Assert(polygonVertices.Count >= 3,
+                $"Degenerate case.\nSeed: {Seed}\nIteration: {Iteration}");
 
             var polygon = new MapPolygon(polygonVertices);
             
@@ -896,7 +995,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 //AddText($"{MapPolygons.Count}: {polygon.VertexCount}", polygon.Centroid.X, polygon.Centroid.Y);
 
                 await Task.Delay(debugDelay);
-                //await WaitForContinue();
+                if (debugWait) await WaitForContinue();
             }
         }
 
@@ -924,34 +1023,42 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         }
 
         async Task FindLeftestSegment(MapSegment currentSegment, List<MapSegment> polygonSegments) {
-            currentSegment.ShowHighlighted();
-
             polygonSegments.Add(currentSegment);
 
             var otherSegments = MapSegments.Where(o => o.Point1 == currentSegment.Point2 && o.Point2 != currentSegment.Point1).ToList();
 
-            foreach (var otherSegment in otherSegments) {
-                otherSegment.ShowHighlightedRand();
+            if (debug) {
+                currentSegment.ShowHighlighted();
+
+                foreach (var otherSegment in otherSegments) {
+                    otherSegment.ShowHighlightedRand();
+                }
+
+                await Task.Delay(debugDelay);
+                if (debugWait) await WaitForContinue();
             }
 
             MapSegment? nextSegment = default;
-            var farthestLeft = float.MinValue;
+            var farthestLeft = double.MinValue;
 
             // Finds the left-most segment to continue mapping the polygon.
             // I chose left for positive winding, no other reason.
             foreach (var otherSegment in otherSegments) {
-                otherSegment.ShowHighlightedAlt();
-
                 if (debug) {
+                    otherSegment.ShowHighlightedAlt();
+
                     Log.LogInformation($"Count: {otherSegments.Count}");
 
                     await Task.Delay(debugDelay);
-                    //await WaitForContinue();
+                    if (debugWait) await WaitForContinue();
                 }
 
                 // We have completed the polygon
                 if (polygonSegments.Contains(otherSegment)) {
-                    otherSegment.ShowSubdued();
+                    if (debug) {
+                        otherSegment.ShowSubdued();
+                    }
+
                     break;
                 }
 
@@ -963,19 +1070,20 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 var currentAngle = currentSegment.AngleTo(otherSegment);
                 var otherSegmentLeftness = currentAngle * (farPointCross < 0 ? -1 : 1);
 
-
                 if (otherSegmentLeftness > farthestLeft) {
                     if (debug) {
                         Log.LogInformation($"Leftness {otherSegmentLeftness} > current {farthestLeft}");
                         await Task.Delay(debugDelay);
-                        //await WaitForContinue();
+                        if (debugWait) await WaitForContinue();
                     }
 
                     farthestLeft = otherSegmentLeftness;
                     nextSegment = otherSegment;
                 }
 
-                otherSegment.ShowSubdued();
+                if (debug) {
+                    otherSegment.ShowSubdued();
+                }
             }
 
             if (nextSegment is null) {
