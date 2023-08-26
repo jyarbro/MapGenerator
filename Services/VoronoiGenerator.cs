@@ -101,9 +101,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         Log.LogTrace("Adding border triangles");
 
         var debug = false;
-        //var debug = Iteration > 1;
-
-        var debugDelay = 10;
+        var debugDelay = 100;
         var debugWait = false;
 
         if (debug) {
@@ -160,9 +158,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         Log.LogTrace("Adding delaunay triangles");
 
         var debug = false;
-        //var debug = Iteration == 8;
-
-        var debugDelay = 10;
+        var debugDelay = 100;
         var debugWait = false;
 
         if (debug) {
@@ -194,13 +190,12 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 }
 
                 if (debug) {
-                    await Task.Delay(debugDelay);
+                    polygon.ShowCircumcircle();
                     
-                    if (debugWait) {
-                        polygon.ShowCircumcircle();
-                        await WaitForContinue();
-                        polygon.HideCircumcircle();
-                    }
+                    await Task.Delay(debugDelay);
+                    if (debugWait) await WaitForContinue();
+
+                    polygon.HideCircumcircle();
                 }
             }
 
@@ -310,10 +305,8 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         Log.LogTrace("Starting voronoi edges");
 
         var debug = false;
-        //var debug = Iteration == 2;
-
         var debugDelay = 100;
-        var debugWait = true;
+        var debugWait = false;
 
         if (debug) {
             Log.LogInformation($"Debugging {nameof(AddVoronoiEdgesFromCircumcircles)}");
@@ -431,9 +424,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         Log.LogTrace("Adding missing voronoi edges");
 
         var debug = false;
-        //var debug = Iteration == 2;
-
-        var debugDelay = 200;
+        var debugDelay = 100;
         var debugWait = false;
 
         if (debug) {
@@ -549,9 +540,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         Log.LogTrace("Chopping borders");
 
         var debug = false;
-        //var debug = Iteration == 2;
-
-        var debugDelay = 200;
+        var debugDelay = 100;
         var debugWait = false;
 
         if (debug) {
@@ -696,8 +685,6 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         Log.LogTrace("Fixing border winding");
 
         var debug = false;
-        //var debug = Iteration == 2;
-
         var debugDelay = 100;
         var debugWait = false;
 
@@ -778,8 +765,6 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         Log.LogTrace("Finding polygons");
 
         var debug = false;
-        //var debug = Iteration == 2;
-
         var debugDelay = 100;
         var debugWait = false;
 
@@ -814,11 +799,6 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         }
 
         while (MapSegments.Any()) {
-            //if (Iteration == 2 && MapPolygons.Count >= 3) {
-            //    debug = true;
-            //    //debugWait = true;
-            //}
-
             var currentSegment = MapSegments.First();
             var polygonSegments = new List<MapSegment>();
 
