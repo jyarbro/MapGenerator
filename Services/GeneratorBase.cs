@@ -34,8 +34,6 @@ public class GeneratorBase {
     ) {
         Log = log;
         Seed = Random.Next();
-        //Seed = 1335106969;
-        //Seed = 1586145746;
     }
 
     public void Initialize(Canvas outputCanvas) {

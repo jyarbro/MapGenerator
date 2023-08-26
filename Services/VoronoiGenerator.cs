@@ -310,10 +310,10 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         Log.LogTrace("Starting voronoi edges");
 
         var debug = false;
-        //var debug = Iteration == 8;
+        //var debug = Iteration == 2;
 
         var debugDelay = 100;
-        var debugWait = false;
+        var debugWait = true;
 
         if (debug) {
             Log.LogInformation($"Debugging {nameof(AddVoronoiEdgesFromCircumcircles)}");
@@ -431,7 +431,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         Log.LogTrace("Adding missing voronoi edges");
 
         var debug = false;
-        //var debug = Iteration == 22;
+        //var debug = Iteration == 2;
 
         var debugDelay = 200;
         var debugWait = false;
@@ -548,10 +548,10 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
     async Task ChopBorder(bool clearCanvas = true) {
         Log.LogTrace("Chopping borders");
 
-        //var debug = false;
-        var debug = Iteration == 16;
+        var debug = false;
+        //var debug = Iteration == 2;
 
-        var debugDelay = 10;
+        var debugDelay = 200;
         var debugWait = false;
 
         if (debug) {
@@ -577,7 +577,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 borderEdge.MapPoint2,
             };
 
-            foreach (var segment in externalSegments) {
+            foreach (var segment in externalSegments.ToList()) {
                 if (debug) {
                     segment.ShowHighlighted();
 
@@ -612,48 +612,17 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                     }
                     // The line cross over the border but starts and stops outside of it.
                     else {
-                        // We don't know which part of the split line crosses the other border, so try both.
-                        // This is unfortunately run twice, once for each border it crosses.
-                        // I could possibly figure out if left or right is "inside" and then use that to 
-                        // determine which point needs to be checked for intersecting.
-
-                        var part1 = new MapSegment(segment.MapPoint1, borderIntersect);
-                        var part2 = new MapSegment(borderIntersect, segment.MapPoint2);
-
-                        foreach (var otherBorder in Border.MapSegments.Where(o => o != borderEdge)) {
-                            var otherIntersect = part1.Intersects(otherBorder);
-
-                            if (otherIntersect.Intersects && !part1.EndPoints.Contains(otherIntersect.Intersection)) {
-                                var newSegment = AddSegment(borderIntersect, new MapPoint(otherIntersect.Intersection));
-                                
-                                if (debug) {
-                                    newSegment.ShowHighlightedRand();
-                                }
-                            }
-
-                            otherIntersect = part2.Intersects(otherBorder);
-
-                            if (otherIntersect.Intersects && !part2.EndPoints.Contains(otherIntersect.Intersection)) {
-                                var newSegment = AddSegment(borderIntersect, new MapPoint(otherIntersect.Intersection));
+                        var newSegment = AddSegment(borderIntersect, segment.MapPoint1.RightSideOfLine(borderEdge) ? segment.MapPoint2 : segment.MapPoint1);
+                        
+                        // Add the newSegment to the list so that the next border will chop the other end.
+                        externalSegments.Add(newSegment);
                             
-                                if (debug) {
-                                    newSegment.ShowHighlightedRand();
-                                }
-                            }
+                        if (debug) {
+                            newSegment.ShowSubdued();
                         }
                     }
 
-                    if (debug) {
-                        await Task.Delay(debugDelay);
-                        if (debugWait) await WaitForContinue();
-                    }
-                }
-
-                if (debug) {
-                    segment.ShowSubdued();
-
-                    await Task.Delay(debugDelay);
-                    if (debugWait) await WaitForContinue();
+                    externalSegments.Remove(segment);
                 }
             }
 
@@ -665,10 +634,10 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
             for (var i = 0; i < borderPoints.Count - 1; i++) {
                 var j = (i + 1) % borderPoints.Count;
 
-                var newSegment = AddSegment(borderPoints[i], borderPoints[j]);
+                var newBorderSegment = AddSegment(borderPoints[i], borderPoints[j]);
 
                 if (debug) {
-                    newSegment.ShowSubdued();
+                    newBorderSegment.ShowSubdued();
 
                     await Task.Delay(debugDelay);
                     if (debugWait) await WaitForContinue();
@@ -808,10 +777,10 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
     async Task FindPolygons() {
         Log.LogTrace("Finding polygons");
 
-        //var debug = false;
-        var debug = Iteration == 2;
+        var debug = false;
+        //var debug = Iteration == 2;
 
-        var debugDelay = 10;
+        var debugDelay = 100;
         var debugWait = false;
 
         if (debug) {

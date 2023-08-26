@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
 using Nrrdio.MapGenerator.Services;
 using Nrrdio.MapGenerator.Services.Models;
+using Nrrdio.Utilities.Maths;
 
 namespace Nrrdio.MapGenerator.App.ViewModels;
 
@@ -35,29 +36,17 @@ public class MainPageViewModel : ObservableRecipient {
 
         Debug.Assert(OutputCanvas is not null);
 
-        var borderVertices = new[] {
-            new MapPoint(0, 0),
-            new MapPoint(0, CanvasHeight),
-            new MapPoint(CanvasWidth, CanvasHeight),
-            new MapPoint(CanvasWidth, 0)
-        };
+        OutputCanvas.Children.Clear();
 
-        //var borderVertices = new[] {
-        //    new MapPoint(50, 25),
-        //    new MapPoint(35, 100),
-        //    new MapPoint(67, 250),
-        //    new MapPoint(90, 220),
-        //    new MapPoint(200, 30),
-        //    new MapPoint(180, 0)
-        //};
+        await Task.Delay(10);
 
-        //var borderVertices = new[] {
-        //    new MapPoint(0, 586.20208011469538),
-        //    new MapPoint(0, 540.45522244492906),
-        //    new MapPoint(45.564302332641176, 588.21774812470164),
-        //    new MapPoint(42.506090064673486, 600),
-        //    new MapPoint(39.215674831520815, 600),
-        //};
+        var borderVertices = new List<MapPoint>();
+        
+        var borderPolygon = new Circle(new Point(CanvasWidth / 2, CanvasHeight / 2), 300).ToPolygon(5);
+
+        foreach (var point in borderPolygon.Vertices) {
+            borderVertices.Add(new MapPoint(point));
+        }
 
         Generator.Initialize(OutputCanvas);
 
@@ -69,9 +58,7 @@ public class MainPageViewModel : ObservableRecipient {
             nestedPolygons.AddRange(result);
         }
 
-        foreach (var polygon in nestedPolygons) {
-            await Generator.GenerateWithReturn(5, polygon.Vertices.Cast<MapPoint>());
-        }
+        Log.LogInformation("Done. Redraw to continue.");
     }
 
     public void Continue() => Generator.Continue = true;
