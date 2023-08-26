@@ -726,10 +726,10 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
     async Task FixBorderWinding(bool clearCanvas = true) {
         Log.LogTrace("Fixing border winding");
 
-        //var debug = false;
-        var debug = Iteration == 16;
+        var debug = false;
+        //var debug = Iteration == 2;
 
-        var debugDelay = 200;
+        var debugDelay = 100;
         var debugWait = false;
 
         if (debug) {
@@ -742,46 +742,16 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
             if (debugWait) await WaitForContinue();
         }
 
-        var borderStartPotential = Border.MapSegments.OrderBy(o => o.Point1.Y).ThenBy(o => o.Point1.X).ToList();
+        var sortedBorders = Border.MapSegments.OrderBy(o => o.Point1.Y).ThenBy(o => o.Point1.X).ToList();
 
-        var borderStart = borderStartPotential[0];
-        var otherBorderSegment = borderStartPotential[1];
+        var borderStart = sortedBorders[0];
+        var borderNext = sortedBorders[1];
 
-        if (debug) {
-            foreach (var borderSegment in Border.MapSegments) {
-                borderSegment.ShowHighlighted();
-            }
+        var mapSegmentsOnBorder = MapSegments.Where(o1 => Border.MapSegments.Any(o2 => o2.Intersects(o1).IntersectionEnd is not null));
+        var currentSegment = mapSegmentsOnBorder.Where(o => o.EndPoints.Contains(borderStart.MapPoint1) && o.Intersects(borderStart).IntersectionEnd is not null).First();
+        var startPoint = currentSegment.MapPoint1;
 
-            borderStart.ShowHighlightedAlt();
-            await Task.Delay(10);
-        }
-
-        MapSegment? currentSegment = null;
-
-        if (debug) {
-            foreach (var segment in MapSegments.Where(o => o.EndPoints.Contains(borderStart.MapPoint1))) {
-                segment.ShowHighlightedRand();
-
-                await Task.Delay(10);
-
-                var intersects = segment.Intersects(borderStart);
-
-                if (intersects.IntersectionEnd is not null) {
-                    currentSegment = segment;
-                    break;
-                }
-
-                segment.ShowSubdued();
-            }
-        }
-        else {
-            currentSegment = MapSegments.Where(o => o.EndPoints.Contains(borderStart.MapPoint1) && o.Intersects(borderStart).IntersectionEnd is not null).First();
-        }
-
-        //var currentSegment = MapSegments.Where(o => o.EndPoints.Contains(borderStart.MapPoint1) && o.Intersects(borderStart).IntersectionEnd is not null).First();
-        var startPoint = currentSegment!.MapPoint1;
-
-        if (currentSegment.Point1 == otherBorderSegment.Point1 || currentSegment.Point2 == otherBorderSegment.Point2) {
+        if (currentSegment.Point1 == borderNext.Point1 || currentSegment.Point2 == borderNext.Point2) {
             currentSegment = FlipSegment(currentSegment);
             startPoint = currentSegment.MapPoint1;
         }
@@ -801,91 +771,17 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 if (debugWait) await WaitForContinue();
             }
 
-            var otherSegments = MapSegments.Where(o =>
-                o.EndPoints.Contains(currentSegment.Point2) && !o.EndPoints.Contains(currentSegment.Point1)
-            ).ToList();
-
-            if (debug) {
-                foreach (var otherSegment in otherSegments) {
-                    otherSegment.ShowHighlighted();
-                }
-
-                await Task.Delay(debugDelay);
-                if (debugWait) await WaitForContinue();
+            if (currentSegment.Point2 == startPoint) {
+                break;
             }
 
-            var nextSegment = currentSegment;
-            var bestAngle = double.MaxValue;
-
-            foreach (var otherSegment in otherSegments.ToList()) {
-                if (debug) {
-                    otherSegment.ShowHighlightedAlt();
-
-                    await Task.Delay(debugDelay);
-                    if (debugWait) await WaitForContinue();
-                }
-
-                var farPoint = otherSegment.Point2;
-                var alignedOtherSegment = otherSegment;
-
-                // otherSegment is reversed
-                if (farPoint == currentSegment.Point2) {
-                    alignedOtherSegment = FlipSegment(otherSegment);
-                    otherSegments.Add(alignedOtherSegment);
-
-                    if (debug) {
-                        alignedOtherSegment.ShowHighlightedAlt();
-
-                        Log.LogInformation("Flipping segment");
-                        await Task.Delay(debugDelay);
-                        if (debugWait) await WaitForContinue();
-                    }
-
-                    farPoint = alignedOtherSegment.Point2;
-                }
-
-                var otherSegmentAngle = currentSegment.AngleTo(alignedOtherSegment);
-
-                if (otherSegmentAngle < bestAngle) {
-                    if (debug) {
-                        Log.LogInformation($"Angle {otherSegmentAngle} < Best {bestAngle}");
-                        
-                        await Task.Delay(debugDelay);
-                        if (debugWait) await WaitForContinue();
-                    }
-
-                    bestAngle = otherSegmentAngle;
-                    nextSegment = alignedOtherSegment;
-                }
-                else if (debug) {
-                    Log.LogInformation($"Angle {otherSegmentAngle} too big");
-                    if (debugWait) await WaitForContinue();
-                }
-
-                if (debug) {
-                    alignedOtherSegment.ShowHighlighted();
-
-                    await Task.Delay(debugDelay);
-                    if (debugWait) await WaitForContinue();
-                }
-            }
-
-            if (debug) {
-                currentSegment.ShowSubdued();
-
-                foreach (var otherSegment in otherSegments) {
-                    otherSegment.ShowSubdued();
-                }
-
-                await Task.Delay(debugDelay);
-                if (debugWait) await WaitForContinue();
+            var nextSegment = mapSegmentsOnBorder.First(o => o.EndPoints.Contains(currentSegment.Point2) && !o.EndPoints.Contains(currentSegment.Point1));
+            
+            if (currentSegment.Point1 == nextSegment.Point1 || currentSegment.Point2 == nextSegment.Point2) {
+                nextSegment = FlipSegment(nextSegment);
             }
 
             currentSegment = nextSegment;
-
-            if (nextSegment.Point2 == startPoint) {
-                break;
-            }
         }
 
         if (debug) {
@@ -913,10 +809,10 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         Log.LogTrace("Finding polygons");
 
         //var debug = false;
-        var debug = Iteration == 16;
+        var debug = Iteration == 2;
 
-        var debugDelay = 100;
-        var debugWait = true;
+        var debugDelay = 10;
+        var debugWait = false;
 
         if (debug) {
             Log.LogInformation($"Debugging {nameof(FindPolygons)}");
@@ -926,7 +822,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 segment.ShowSubdued();
             }
 
-            await Task.Delay(10);
+            await Task.Delay(1);
         }
 
         var nonBorderSegments = MapSegments.Where(o1 => Border.MapSegments.All(o2 => o1.Intersects(o2).IntersectionEnd is null)).ToList();
@@ -949,9 +845,9 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         }
 
         while (MapSegments.Any()) {
-            // Testing the final polygon
-            //if (MapSegments.Count < 17) {
-            //    debugWait = true;
+            //if (Iteration == 2 && MapPolygons.Count >= 3) {
+            //    debug = true;
+            //    //debugWait = true;
             //}
 
             var currentSegment = MapSegments.First();
@@ -1011,6 +907,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
             textBlock.RenderTransform = new TransformGroup {
                 Children = new TransformCollection {
                 new TranslateTransform {
+                    X = -15,
                     Y = -14
                 },
                 new ScaleTransform {
