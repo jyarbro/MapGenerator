@@ -7,18 +7,10 @@ using Nrrdio.Utilities.Maths;
 
 namespace Nrrdio.MapGenerator.Services;
 
-public class VoronoiGenerator : IGenerator {
+public class VoronoiGenerator {
     public bool Continue { get; set; }
-    public int Seed {
-        get => _Seed;
-        set {
-            _Seed = value;
-            Random = new Random(_Seed);
-        }
-    }
-    int _Seed;
-
-    public Random Random { get; private set; } = new();
+    public Random Random { get; set; }
+    public int Seed { get; set; }
 
     ILogger<VoronoiGenerator> Log { get; }
     List<MapPoint> MapPoints { get; set; } = new();
@@ -37,7 +29,6 @@ public class VoronoiGenerator : IGenerator {
     ) {
         Log = log;
         Canvas = canvas;
-        Seed = Random.Next();
     }
 #pragma warning restore CS8618
 
