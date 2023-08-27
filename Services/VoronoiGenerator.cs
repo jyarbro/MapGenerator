@@ -7,8 +7,39 @@ using Nrrdio.Utilities.Maths;
 
 namespace Nrrdio.MapGenerator.Services;
 
-public class VoronoiGenerator : GeneratorBase, IGenerator {
-    public VoronoiGenerator(ILogger<GeneratorBase> log) : base(log) { }
+public class VoronoiGenerator : IGenerator {
+    public bool Continue { get; set; }
+    public int Seed {
+        get => _Seed;
+        set {
+            _Seed = value;
+            Random = new Random(_Seed);
+        }
+    }
+    int _Seed;
+
+    public Random Random { get; private set; } = new();
+
+    ILogger<VoronoiGenerator> Log { get; }
+    List<MapPoint> MapPoints { get; set; } = new();
+    List<MapSegment> MapSegments { get; set; } = new();
+    List<MapPolygon> MapPolygons { get; set; } = new();
+
+    Canvas OutputCanvas { get; set; }
+    MapPolygon Border { get; set; }
+    int PointCount { get; set; }
+    bool Initialized { get; set; }
+    int Iteration { get; set; }
+
+    public VoronoiGenerator(ILogger<VoronoiGenerator> log) {
+        Log = log;
+        Seed = Random.Next();
+    }
+
+    public void Initialize(Canvas outputCanvas) {
+        OutputCanvas = outputCanvas;
+        Initialized = true;
+    }
 
     public async Task Generate(int points, IEnumerable<MapPoint> borderVertices) {
         if (!Initialized) {
@@ -77,6 +108,8 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         return MapPolygons;
     }
 
+    #region Canvas Content
+
     void ClearCanvasArtifacts() {
         foreach (var polygon in MapPolygons) {
             polygon.HidePath();
@@ -95,6 +128,38 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
         foreach (var point in MapPoints) {
             point.Hide();
         }
+    }
+
+    void GeneratePoints() {
+        Log.LogTrace("Adding points");
+
+        double pointX;
+        double pointY;
+
+        var minX = Border.Vertices.Min(point => point.X);
+        var minY = Border.Vertices.Min(point => point.Y);
+        var maxX = Border.Vertices.Max(point => point.X);
+        var maxY = Border.Vertices.Max(point => point.Y);
+
+        var rangeX = maxX - minX;
+        var rangeY = maxY - minY;
+
+        var i = 0;
+
+        while (i < PointCount) {
+            pointX = minX + Random.NextDouble() * rangeX;
+            pointY = minY + Random.NextDouble() * rangeY;
+            var point = new Point(pointX, pointY);
+
+            if (Border.Contains(point)) {
+                var mapPoint = new MapPoint(point);
+                AddPoint(ref mapPoint);
+
+                i++;
+            }
+        }
+
+        MapPoints = MapPoints.OrderBy(point => point.Y).ThenBy(point => point.X).Cast<MapPoint>().ToList();
     }
 
     async Task AddBorderTriangles(bool clearCanvas = true) {
@@ -129,7 +194,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
             var triangle = new MapPolygon(centroid, borderPoints[i], borderPoints[j]);
             AddPolygon(triangle);
-    
+
             var point = borderPoints[i];
             AddPoint(ref point);
 
@@ -191,7 +256,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
                 if (debug) {
                     polygon.ShowCircumcircle();
-                    
+
                     await Task.Delay(debugDelay);
                     if (debugWait) await WaitForContinue();
 
@@ -472,7 +537,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
                     var segment = polygon.MapSegments.First(o1 => Border.MapSegments.Any(o2 => o2.Intersects(o1).IntersectionEnd is not null));
 
-                    var slopeNegReciprocal = - 1 / segment.Slope;
+                    var slopeNegReciprocal = -1 / segment.Slope;
                     var distance = Math.Pow((polygon.Circumcircle.Center - segment.Midpoint).Magnitude, 2);
 
                     var deltaX = Math.Sqrt(distance / (1 + Math.Pow(slopeNegReciprocal, 2)));
@@ -545,7 +610,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
         if (debug) {
             Log.LogInformation($"Debugging {nameof(ChopBorder)}");
-            
+
             foreach (var segment in MapSegments) {
                 segment.ShowSubdued();
             }
@@ -602,10 +667,10 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                     // The line cross over the border but starts and stops outside of it.
                     else {
                         var newSegment = AddSegment(borderIntersect, segment.MapPoint1.RightSideOfLine(borderEdge) ? segment.MapPoint2 : segment.MapPoint1);
-                        
+
                         // Add the newSegment to the list so that the next border will chop the other end.
                         externalSegments.Add(newSegment);
-                            
+
                         if (debug) {
                             newSegment.ShowSubdued();
                         }
@@ -732,7 +797,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
             }
 
             var nextSegment = mapSegmentsOnBorder.First(o => o.EndPoints.Contains(currentSegment.Point2) && !o.EndPoints.Contains(currentSegment.Point1));
-            
+
             if (currentSegment.Point1 == nextSegment.Point1 || currentSegment.Point2 == nextSegment.Point2) {
                 nextSegment = FlipSegment(nextSegment);
             }
@@ -832,7 +897,7 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
                 $"Degenerate case.\nSeed: {Seed}\nIteration: {Iteration}");
 
             var polygon = new MapPolygon(polygonVertices);
-            
+
             AddPolygon(polygon);
 
             if (debug) {
@@ -938,5 +1003,161 @@ public class VoronoiGenerator : GeneratorBase, IGenerator {
 
             await FindLeftestSegment(nextSegment, polygonSegments);
         }
+    } 
+
+    #endregion
+
+    #region Polygons
+    protected void AddPolygon(MapPolygon polygon) {
+        MapPolygons.Add(polygon);
+
+        OutputCanvas.Children.Add(polygon.CanvasCircumcircle);
+        OutputCanvas.Children.Add(polygon.CanvasPolygon);
+        OutputCanvas.Children.Add(polygon.CanvasPath);
+
+        foreach (var point in polygon.MapPoints) {
+            if (!OutputCanvas.Children.Contains(point.CanvasPoint)) {
+                OutputCanvas.Children.Add(point.CanvasPoint);
+            }
+        }
+
+        foreach (var segment in polygon.MapSegments) {
+            OutputCanvas.Children.Add(segment.CanvasPath);
+        }
+    }
+
+    protected void HidePolygons() {
+        foreach (var polygon in MapPolygons.ToList()) {
+            polygon.HideCircumcircle();
+            polygon.HidePath();
+            polygon.HidePolygon();
+        }
+    }
+
+    protected void ClearPolygons() {
+        foreach (var polygon in MapPolygons.ToList()) {
+            RemovePolygon(polygon);
+        }
+
+        Debug.Assert(MapPolygons.Count == 0);
+    }
+
+    protected void RemovePolygon(MapPolygon polygon) {
+        OutputCanvas.Children.Remove(polygon.CanvasPolygon);
+        OutputCanvas.Children.Remove(polygon.CanvasPath);
+        OutputCanvas.Children.Remove(polygon.CanvasCircumcircle);
+
+        foreach (var point in polygon.MapPoints.Where(o => !MapPoints.Contains(o))) {
+            OutputCanvas.Children.Remove(point.CanvasPoint);
+        }
+
+        foreach (var segment in polygon.MapSegments.Where(o => !MapSegments.Contains(o))) {
+            OutputCanvas.Children.Remove(segment.CanvasPath);
+        }
+
+        if (!MapPolygons.Remove(polygon)) {
+            throw new InvalidOperationException("Polygon not found in MapPolygons");
+        }
+    }
+    #endregion
+
+    #region Segments
+    protected MapSegment AddSegment(MapPoint point1, MapPoint point2) {
+        if (point1 == point2) {
+            throw new ArgumentException("The points must be different.");
+        }
+
+        AddPoint(ref point1);
+        AddPoint(ref point2);
+
+        // Don't look for reverse, because we need to add reverse segments later
+        var segment = MapSegments.FirstOrDefault(o => o.Point1 == point1 && o.Point2 == point2);
+
+        if (segment is null) {
+            segment = new MapSegment(point1, point2);
+            MapSegments.Add(segment);
+            OutputCanvas.Children.Add(segment.CanvasPath);
+        }
+
+        return segment;
+    }
+
+    protected void HideSegments() {
+        foreach (var segment in MapSegments.ToList()) {
+            segment.Hide();
+        }
+    }
+
+    protected void ClearSegments() {
+        foreach (var segment in MapSegments.ToList()) {
+            RemoveSegment(segment);
+        }
+
+        Debug.Assert(MapSegments.Count == 0);
+    }
+
+    protected void RemoveSegment(MapSegment segment) {
+        OutputCanvas.Children.Remove(segment.CanvasPath);
+
+        if (!MapSegments.Remove(segment)) {
+            throw new InvalidOperationException("Segment not found in MapSegments");
+        }
+    }
+    #endregion
+
+    #region Points
+    protected void AddPoint(ref MapPoint point) {
+        var existingPoint = MapPoints.FirstOrDefault(point.Equals);
+
+        if (existingPoint is null) {
+            MapPoints.Add(point);
+
+            if (!OutputCanvas.Children.Contains(point.CanvasPoint)) {
+                OutputCanvas.Children.Add(point.CanvasPoint);
+            }
+        }
+        else {
+            point = existingPoint;
+        }
+    }
+
+    protected void HidePoints() {
+        foreach (var point in MapPoints.ToList()) {
+            point.Hide();
+        }
+    }
+
+    protected void ClearPoints() {
+        foreach (var point in MapPoints.ToList()) {
+            RemovePoint(point);
+        }
+
+        Debug.Assert(MapPoints.Count == 0);
+    }
+
+    protected void RemovePoint(MapPoint point) {
+        OutputCanvas.Children.Remove(point.CanvasPoint);
+
+        var preCount = MapPoints.Count;
+
+        if (!MapPoints.Remove(point)) {
+            throw new InvalidOperationException("Point not found in MapPoints");
+        }
+
+        Debug.Assert(preCount == MapPoints.Count + 1);
+    }
+
+    #endregion
+
+    protected async Task WaitForContinue() {
+        //Log.LogInformation("Wait");
+
+        Continue = false;
+
+        await Task.Run(() => {
+            while (!Continue) {
+                Thread.Sleep(10);
+            }
+        });
     }
 }
