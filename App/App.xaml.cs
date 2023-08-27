@@ -56,6 +56,7 @@ public partial class App : Application {
         services.AddScoped<IStateManager, StateManager>();
         services.AddScoped<IPageService, PageService>();
         services.AddScoped<INavigationService, NavigationService>();
+        services.AddScoped<ICanvasWrapper, CanvasWrapper>();
 
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<MainPageViewModel>();

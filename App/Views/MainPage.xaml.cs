@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using Nrrdio.MapGenerator.App.Helpers;
 using Nrrdio.MapGenerator.App.ViewModels;
+using Nrrdio.MapGenerator.Services;
 using Nrrdio.Utilities.Loggers;
 
 namespace Nrrdio.MapGenerator.App.Views;
@@ -11,7 +12,9 @@ namespace Nrrdio.MapGenerator.App.Views;
 [RegisterPage(typeof(MainPageViewModel), typeof(MainPage))]
 public sealed partial class MainPage : Page {
     public MainPageViewModel ViewModel { get; }
+
     ILogger<MainPage> Log { get; }
+    ICanvasWrapper Canvas { get; }
 
     int Resizing { get; set; }
     bool Drawing { get; set; }
@@ -19,10 +22,11 @@ public sealed partial class MainPage : Page {
     public MainPage() {
         ViewModel = App.GetService<MainPageViewModel>();
         Log = App.GetService<ILogger<MainPage>>();
+        Canvas = App.GetService<ICanvasWrapper>();
 
         InitializeComponent();
 
-        ViewModel.SetCanvas(OutputCanvas);
+        Canvas.Initialize(OutputCanvas);
 
         DataContext = ViewModel;
 

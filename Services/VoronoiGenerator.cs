@@ -25,40 +25,28 @@ public class VoronoiGenerator : IGenerator {
     List<MapSegment> MapSegments { get; set; } = new();
     List<MapPolygon> MapPolygons { get; set; } = new();
 
-    Canvas OutputCanvas { get; set; }
+    ICanvasWrapper Canvas { get; set; }
     MapPolygon Border { get; set; }
     int PointCount { get; set; }
-    bool Initialized { get; set; }
     int Iteration { get; set; }
 
-    public VoronoiGenerator(ILogger<VoronoiGenerator> log) {
+#pragma warning disable CS8618 // Border is null
+    public VoronoiGenerator(
+        ILogger<VoronoiGenerator> log,
+        ICanvasWrapper canvas
+    ) {
         Log = log;
+        Canvas = canvas;
         Seed = Random.Next();
     }
+#pragma warning restore CS8618
 
-    public void Initialize(Canvas outputCanvas) {
-        OutputCanvas = outputCanvas;
-        Initialized = true;
-    }
-
-    public async Task Generate(int points, IEnumerable<MapPoint> borderVertices) {
-        if (!Initialized) {
-            throw new InvalidOperationException("Must initialize first");
-        }
-
-        await GenerateWithReturn(points, borderVertices);
-    }
-
-    public async Task<IEnumerable<MapPolygon>> GenerateWithReturn(int points, IEnumerable<MapPoint> borderVertices) {
+    public async Task<IEnumerable<MapPolygon>> Generate(int points, IEnumerable<MapPoint> borderVertices) {
         Log.LogTrace(nameof(Generate));
-
-        await Task.Delay(10);
 
         var debug = false;
 
-        if (!Initialized) {
-            throw new InvalidOperationException("Must initialize first");
-        }
+        await Task.Delay(10);
 
         Iteration++;
 
@@ -82,11 +70,11 @@ public class VoronoiGenerator : IGenerator {
             Border = new MapPolygon(borderVertices);
         }
 
-        OutputCanvas.Children.Add(Border.CanvasPath);
+        Canvas.Children.Add(Border.CanvasPath);
         Border.ShowPathSubdued();
 
         foreach (var segment in Border.MapSegments) {
-            OutputCanvas.Children.Add(segment.CanvasPath);
+            Canvas.Children.Add(segment.CanvasPath);
         }
 
         GeneratePoints();
@@ -334,7 +322,7 @@ public class VoronoiGenerator : IGenerator {
                 while (copy.Count > 0) {
                     var nextSegments = copy.Where(o => o.EndPoints.Contains(nextPoint)).ToList();
 
-                    // Why did I not write a note to myself about this????
+                    // Why did I not write a note to myself about what this is????
                     if (nextSegments.Count != 1) {
                         Log.LogInformation($"Degenerate case.\nSeed: {Seed}\nIteration: {Iteration}");
                         throw new InvalidOperationException("Degenerate case");
@@ -915,8 +903,8 @@ public class VoronoiGenerator : IGenerator {
                 Text = content
             };
 
-            Canvas.SetTop(textBlock, bottom);
-            Canvas.SetLeft(textBlock, left + 15);
+            Microsoft.UI.Xaml.Controls.Canvas.SetTop(textBlock, bottom);
+            Microsoft.UI.Xaml.Controls.Canvas.SetLeft(textBlock, left + 15);
 
             textBlock.RenderTransform = new TransformGroup {
                 Children = new TransformCollection {
@@ -930,7 +918,7 @@ public class VoronoiGenerator : IGenerator {
             }
             };
 
-            OutputCanvas.Children.Add(textBlock);
+            Canvas.Children.Add(textBlock);
         }
 
         async Task FindLeftestSegment(MapSegment currentSegment, List<MapSegment> polygonSegments) {
@@ -1003,30 +991,31 @@ public class VoronoiGenerator : IGenerator {
 
             await FindLeftestSegment(nextSegment, polygonSegments);
         }
-    } 
+    }
 
     #endregion
 
     #region Polygons
-    protected void AddPolygon(MapPolygon polygon) {
+
+    void AddPolygon(MapPolygon polygon) {
         MapPolygons.Add(polygon);
 
-        OutputCanvas.Children.Add(polygon.CanvasCircumcircle);
-        OutputCanvas.Children.Add(polygon.CanvasPolygon);
-        OutputCanvas.Children.Add(polygon.CanvasPath);
+        Canvas.Children.Add(polygon.CanvasCircumcircle);
+        Canvas.Children.Add(polygon.CanvasPolygon);
+        Canvas.Children.Add(polygon.CanvasPath);
 
         foreach (var point in polygon.MapPoints) {
-            if (!OutputCanvas.Children.Contains(point.CanvasPoint)) {
-                OutputCanvas.Children.Add(point.CanvasPoint);
+            if (!Canvas.Children.Contains(point.CanvasPoint)) {
+                Canvas.Children.Add(point.CanvasPoint);
             }
         }
 
         foreach (var segment in polygon.MapSegments) {
-            OutputCanvas.Children.Add(segment.CanvasPath);
+            Canvas.Children.Add(segment.CanvasPath);
         }
     }
 
-    protected void HidePolygons() {
+    void HidePolygons() {
         foreach (var polygon in MapPolygons.ToList()) {
             polygon.HideCircumcircle();
             polygon.HidePath();
@@ -1034,7 +1023,7 @@ public class VoronoiGenerator : IGenerator {
         }
     }
 
-    protected void ClearPolygons() {
+    void ClearPolygons() {
         foreach (var polygon in MapPolygons.ToList()) {
             RemovePolygon(polygon);
         }
@@ -1042,27 +1031,29 @@ public class VoronoiGenerator : IGenerator {
         Debug.Assert(MapPolygons.Count == 0);
     }
 
-    protected void RemovePolygon(MapPolygon polygon) {
-        OutputCanvas.Children.Remove(polygon.CanvasPolygon);
-        OutputCanvas.Children.Remove(polygon.CanvasPath);
-        OutputCanvas.Children.Remove(polygon.CanvasCircumcircle);
+    void RemovePolygon(MapPolygon polygon) {
+        Canvas.Children.Remove(polygon.CanvasPolygon);
+        Canvas.Children.Remove(polygon.CanvasPath);
+        Canvas.Children.Remove(polygon.CanvasCircumcircle);
 
         foreach (var point in polygon.MapPoints.Where(o => !MapPoints.Contains(o))) {
-            OutputCanvas.Children.Remove(point.CanvasPoint);
+            Canvas.Children.Remove(point.CanvasPoint);
         }
 
         foreach (var segment in polygon.MapSegments.Where(o => !MapSegments.Contains(o))) {
-            OutputCanvas.Children.Remove(segment.CanvasPath);
+            Canvas.Children.Remove(segment.CanvasPath);
         }
 
         if (!MapPolygons.Remove(polygon)) {
             throw new InvalidOperationException("Polygon not found in MapPolygons");
         }
     }
+
     #endregion
 
     #region Segments
-    protected MapSegment AddSegment(MapPoint point1, MapPoint point2) {
+
+    MapSegment AddSegment(MapPoint point1, MapPoint point2) {
         if (point1 == point2) {
             throw new ArgumentException("The points must be different.");
         }
@@ -1076,19 +1067,19 @@ public class VoronoiGenerator : IGenerator {
         if (segment is null) {
             segment = new MapSegment(point1, point2);
             MapSegments.Add(segment);
-            OutputCanvas.Children.Add(segment.CanvasPath);
+            Canvas.Children.Add(segment.CanvasPath);
         }
 
         return segment;
     }
 
-    protected void HideSegments() {
+    void HideSegments() {
         foreach (var segment in MapSegments.ToList()) {
             segment.Hide();
         }
     }
 
-    protected void ClearSegments() {
+    void ClearSegments() {
         foreach (var segment in MapSegments.ToList()) {
             RemoveSegment(segment);
         }
@@ -1096,24 +1087,26 @@ public class VoronoiGenerator : IGenerator {
         Debug.Assert(MapSegments.Count == 0);
     }
 
-    protected void RemoveSegment(MapSegment segment) {
-        OutputCanvas.Children.Remove(segment.CanvasPath);
+    void RemoveSegment(MapSegment segment) {
+        Canvas.Children.Remove(segment.CanvasPath);
 
         if (!MapSegments.Remove(segment)) {
             throw new InvalidOperationException("Segment not found in MapSegments");
         }
     }
+
     #endregion
 
     #region Points
-    protected void AddPoint(ref MapPoint point) {
+
+    void AddPoint(ref MapPoint point) {
         var existingPoint = MapPoints.FirstOrDefault(point.Equals);
 
         if (existingPoint is null) {
             MapPoints.Add(point);
 
-            if (!OutputCanvas.Children.Contains(point.CanvasPoint)) {
-                OutputCanvas.Children.Add(point.CanvasPoint);
+            if (!Canvas.Children.Contains(point.CanvasPoint)) {
+                Canvas.Children.Add(point.CanvasPoint);
             }
         }
         else {
@@ -1121,13 +1114,13 @@ public class VoronoiGenerator : IGenerator {
         }
     }
 
-    protected void HidePoints() {
+    void HidePoints() {
         foreach (var point in MapPoints.ToList()) {
             point.Hide();
         }
     }
 
-    protected void ClearPoints() {
+    void ClearPoints() {
         foreach (var point in MapPoints.ToList()) {
             RemovePoint(point);
         }
@@ -1135,8 +1128,8 @@ public class VoronoiGenerator : IGenerator {
         Debug.Assert(MapPoints.Count == 0);
     }
 
-    protected void RemovePoint(MapPoint point) {
-        OutputCanvas.Children.Remove(point.CanvasPoint);
+    void RemovePoint(MapPoint point) {
+        Canvas.Children.Remove(point.CanvasPoint);
 
         var preCount = MapPoints.Count;
 
@@ -1149,9 +1142,7 @@ public class VoronoiGenerator : IGenerator {
 
     #endregion
 
-    protected async Task WaitForContinue() {
-        //Log.LogInformation("Wait");
-
+    async Task WaitForContinue() {
         Continue = false;
 
         await Task.Run(() => {
