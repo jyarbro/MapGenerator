@@ -9,8 +9,9 @@ public class MapSegment : Segment {
     public MapPoint MapPoint2 => (MapPoint) Point2;
     public MapPoint[] EndPoints { get; } = new MapPoint[2];
 
-    public LineGeometry CanvasGeometry { get; }
     public Microsoft.UI.Xaml.Shapes.Path CanvasPath { get; }
+    
+    LineGeometry CanvasGeometry { get; }
 
     Windows.UI.Color SubduedColor = Colors.Blue;
     Windows.UI.Color SubduedAltColor = Colors.Purple;

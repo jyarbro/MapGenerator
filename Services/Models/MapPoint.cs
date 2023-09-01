@@ -46,6 +46,20 @@ public class MapPoint : Point {
         CanvasPoint.Fill = new SolidColorBrush(HighlightedAltColor);
     }
 
+    public void ShowHighlightedRand() {
+        var rand = new Random();
+        var r = rand.Next(40, 255);
+        var g = rand.Next(40, 255);
+        var b = rand.Next(40, 255);
+
+        CanvasPoint.Visibility = Visibility.Visible;
+        CanvasPoint.Width = HighlightedSize;
+        CanvasPoint.Height = HighlightedSize; 
+        CanvasPoint.Margin = new Thickness(X - 0.5 * HighlightedSize, Y - 0.5 * HighlightedSize, 0, 0);
+
+        CanvasPoint.Fill = new SolidColorBrush(Windows.UI.Color.FromArgb(255, Convert.ToByte(r), Convert.ToByte(g), Convert.ToByte(b)));
+    }
+
     public void ShowSubdued() {
         CanvasPoint.Visibility = Visibility.Visible;
         CanvasPoint.Width = SubduedSize;
