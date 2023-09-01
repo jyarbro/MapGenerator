@@ -8,6 +8,7 @@ using Nrrdio.MapGenerator.App.Services;
 using Nrrdio.MapGenerator.App.ViewModels;
 using Nrrdio.MapGenerator.App.Views;
 using Nrrdio.MapGenerator.Services;
+using Nrrdio.Utilities;
 using Nrrdio.Utilities.Loggers;
 
 namespace Nrrdio.MapGenerator.App;
@@ -52,6 +53,7 @@ public partial class App : Application {
 
     void ConfigureServices(HostBuilderContext context, IServiceCollection services) {
         services.AddSingleton<ILoggerProvider, HandlerLoggerProvider>(_ => new HandlerLoggerProvider { LogLevel = LogLevel.Trace });
+        services.AddSingleton<Wait>();
 
         services.AddScoped<IStateManager, StateManager>();
         services.AddScoped<IPageService, PageService>();

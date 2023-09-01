@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Navigation;
 using Nrrdio.MapGenerator.App.Helpers;
 using Nrrdio.MapGenerator.App.ViewModels;
 using Nrrdio.MapGenerator.Services;
+using Nrrdio.Utilities;
 using Nrrdio.Utilities.Loggers;
 
 namespace Nrrdio.MapGenerator.App.Views;
@@ -15,6 +16,7 @@ public sealed partial class MainPage : Page {
 
     ILogger<MainPage> Log { get; }
     ICanvasWrapper Canvas { get; }
+    Wait Wait { get; }
 
     int Resizing { get; set; }
     bool Drawing { get; set; }
@@ -23,6 +25,7 @@ public sealed partial class MainPage : Page {
         ViewModel = App.GetService<MainPageViewModel>();
         Log = App.GetService<ILogger<MainPage>>();
         Canvas = App.GetService<ICanvasWrapper>();
+        Wait = App.GetService<Wait>();
 
         InitializeComponent();
 
@@ -94,6 +97,6 @@ public sealed partial class MainPage : Page {
 
     void OnContinueButtonClick(object sender, RoutedEventArgs e) {
         Log.LogTrace($"Event: {nameof(OnContinueButtonClick)}");
-        ViewModel.Continue();
+        Wait.Continue = true;
     }
 }

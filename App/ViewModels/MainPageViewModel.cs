@@ -13,5 +13,4 @@ public class MainPageViewModel : ObservableRecipient {
     }
 
     public async Task Start() => await Orchestrator.Start();
-    public void Continue() => Orchestrator.Continue = true;
 }
