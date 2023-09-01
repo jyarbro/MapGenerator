@@ -19,19 +19,22 @@ public class Orchestrator {
 
     ICanvasWrapper Canvas { get; }
     ILogger<Orchestrator> Log { get; }
-    Wait Wait { get; set; }
+    Wait Wait { get; }
     VoronoiTesselator VoronoiTesselator { get; }
+    Relaxer Relaxer { get; }
 
     public Orchestrator(
         ICanvasWrapper canvas,
         ILogger<Orchestrator> log,
         Wait wait,
-        VoronoiTesselator voronoiTesselator
+        VoronoiTesselator voronoiTesselator,
+        Relaxer relaxer
     ) {
         Canvas = canvas;
         Log = log;
         Wait = wait;
         VoronoiTesselator = voronoiTesselator;
+        Relaxer = relaxer;
         Seed = Random.Next();
 
         VoronoiTesselator.Random = Random;
@@ -63,13 +66,31 @@ public class Orchestrator {
             borderVertices.Add(new MapPoint(point));
         }
 
-        var polygons = await VoronoiTesselator.Start(10, borderVertices);
-        var nestedPolygons = new List<MapPolygon>();
+        var border = new MapPolygon(borderVertices);
 
-        foreach (var polygon in polygons.ToList()) {
-            var result = await VoronoiTesselator.Start(4, polygon.Vertices.Cast<MapPoint>());
-            nestedPolygons.AddRange(result);
+        if (border.Winding == Polygon.EWinding.CLOCKWISE) {
+            borderVertices.Reverse();
+            border = new MapPolygon(borderVertices);
         }
+
+        Canvas.Children.Add(border.CanvasPath);
+
+        foreach (var segment in border.MapSegments) {
+            Canvas.Children.Add(segment.CanvasPath);
+        }
+
+        var polygons = await VoronoiTesselator.Start(100, border);
+
+        //var nestedPolygons = new List<MapPolygon>();
+
+        //foreach (var polygon in polygons.ToList()) {
+        //    var result = await VoronoiTesselator.Start(4, polygon);
+        //    nestedPolygons.AddRange(result);
+        //}
+
+        var segments = polygons.SelectMany(o => o.MapSegments).ToList();
+
+        await Relaxer.Start(segments, border);
 
         Log.LogInformation("Done. Redraw to continue.");
     }

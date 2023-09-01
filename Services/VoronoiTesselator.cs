@@ -36,7 +36,7 @@ public class VoronoiTesselator {
     }
 #pragma warning restore CS8618
 
-    public async Task<IEnumerable<MapPolygon>> Start(int points, IEnumerable<MapPoint> borderVertices) {
+    public async Task<IEnumerable<MapPolygon>> Start(int points, MapPolygon border) {
         Log.LogTrace(nameof(Start));
 
         Iteration++;
@@ -46,20 +46,9 @@ public class VoronoiTesselator {
         MapPoints.Clear();
 
         PointCount = points;
+        Border = border;
 
-        Border = new MapPolygon(borderVertices);
-
-        if (Border.Winding == Polygon.EWinding.CLOCKWISE) {
-            borderVertices = borderVertices.Reverse();
-            Border = new MapPolygon(borderVertices);
-        }
-
-        Canvas.Children.Add(Border.CanvasPath);
         Border.ShowPathSubdued();
-
-        foreach (var segment in Border.MapSegments) {
-            Canvas.Children.Add(segment.CanvasPath);
-        }
 
         GeneratePoints();
 
@@ -71,8 +60,8 @@ public class VoronoiTesselator {
         await FixBorderWinding(clearCanvas: true);
         await FindPolygons();
 
-        foreach (var polygon in MapPolygons) {
-            polygon.ShowPathSubdued();
+        foreach (var segment in MapPolygons.SelectMany(o => o.MapSegments)) {
+            segment.ShowSubdued();
         }
 
         await Wait.For(10);
