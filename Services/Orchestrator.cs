@@ -20,22 +20,22 @@ public class Orchestrator {
     ICanvasWrapper Canvas { get; }
     ILogger<Orchestrator> Log { get; }
     Wait Wait { get; set; }
-    VoronoiGenerator VoronoiGenerator { get; }
+    VoronoiTesselator VoronoiTesselator { get; }
 
     public Orchestrator(
         ICanvasWrapper canvas,
         ILogger<Orchestrator> log,
         Wait wait,
-        VoronoiGenerator voronoiGenerator
+        VoronoiTesselator voronoiTesselator
     ) {
         Canvas = canvas;
         Log = log;
         Wait = wait;
-        VoronoiGenerator = voronoiGenerator;
+        VoronoiTesselator = voronoiTesselator;
         Seed = Random.Next();
 
-        VoronoiGenerator.Random = Random;
-        VoronoiGenerator.Seed = Seed;
+        VoronoiTesselator.Random = Random;
+        VoronoiTesselator.Seed = Seed;
     }
 
     public async Task Start() {
@@ -63,11 +63,11 @@ public class Orchestrator {
             borderVertices.Add(new MapPoint(point));
         }
 
-        var polygons = await VoronoiGenerator.Generate(10, borderVertices);
+        var polygons = await VoronoiTesselator.Start(10, borderVertices);
         var nestedPolygons = new List<MapPolygon>();
 
         foreach (var polygon in polygons.ToList()) {
-            var result = await VoronoiGenerator.Generate(4, polygon.Vertices.Cast<MapPoint>());
+            var result = await VoronoiTesselator.Start(4, polygon.Vertices.Cast<MapPoint>());
             nestedPolygons.AddRange(result);
         }
 

@@ -65,7 +65,7 @@ public partial class App : Application {
         services.AddTransient<MainPage>();
 
         services.AddTransient<Orchestrator>();
-        services.AddTransient<VoronoiGenerator>();
+        services.AddTransient<VoronoiTesselator>();
 
         services
             .AddOptions<Settings>()

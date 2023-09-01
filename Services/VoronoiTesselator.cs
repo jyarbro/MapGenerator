@@ -8,12 +8,11 @@ using Nrrdio.Utilities;
 
 namespace Nrrdio.MapGenerator.Services;
 
-public class VoronoiGenerator {
-    public bool Continue { get; set; }
+public class VoronoiTesselator {
     public Random Random { get; set; }
     public int Seed { get; set; }
 
-    ILogger<VoronoiGenerator> Log { get; }
+    ILogger<VoronoiTesselator> Log { get; }
     ICanvasWrapper Canvas { get; }
     Wait Wait { get; }
 
@@ -26,8 +25,8 @@ public class VoronoiGenerator {
     int Iteration { get; set; }
 
 #pragma warning disable CS8618 // Border is null
-    public VoronoiGenerator(
-        ILogger<VoronoiGenerator> log,
+    public VoronoiTesselator(
+        ILogger<VoronoiTesselator> log,
         ICanvasWrapper canvas,
         Wait wait
     ) {
@@ -37,8 +36,8 @@ public class VoronoiGenerator {
     }
 #pragma warning restore CS8618
 
-    public async Task<IEnumerable<MapPolygon>> Generate(int points, IEnumerable<MapPoint> borderVertices) {
-        Log.LogTrace(nameof(Generate));
+    public async Task<IEnumerable<MapPolygon>> Start(int points, IEnumerable<MapPoint> borderVertices) {
+        Log.LogTrace(nameof(Start));
 
         Iteration++;
 
