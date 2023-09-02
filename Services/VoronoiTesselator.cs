@@ -127,7 +127,7 @@ public class VoronoiTesselator {
         Log.LogTrace("Adding border triangles");
 
         var debug = false;
-        Wait.Delay = 100;
+        Wait.Delay = 10;
         Wait.Pause = false;
 
         if (debug) {
@@ -171,7 +171,7 @@ public class VoronoiTesselator {
         Log.LogTrace("Adding delaunay triangles");
 
         var debug = false;
-        Wait.Delay = 100;
+        Wait.Delay = 10;
         Wait.Pause = false;
 
         if (debug) {
@@ -277,9 +277,9 @@ public class VoronoiTesselator {
                 while (copy.Count > 0) {
                     var nextSegments = copy.Where(o => o.EndPoints.Contains(nextPoint)).ToList();
 
-                    // Rather frequently two non-adjacent circumcircles will capture a point,
+                    // Rather frequently, two non-adjacent circumcircles will capture a point
                     // but the triangle between them will not capture it. This results in a degenerate
-                    // hole boundary that needs to be ignored.
+                    // "bow tie" hole boundary that needs to be ignored.
                     // I could try to fix this by finding any triangles where more than 1 edge is present
                     // in the other identified triangles.
                     if (nextSegments.Count != 1) {
@@ -317,7 +317,7 @@ public class VoronoiTesselator {
         Log.LogTrace("Starting voronoi edges");
 
         var debug = false;
-        Wait.Delay = 100;
+        Wait.Delay = 200;
         Wait.Pause = false;
 
         if (debug) {
@@ -433,7 +433,7 @@ public class VoronoiTesselator {
         Log.LogTrace("Adding missing voronoi edges");
 
         var debug = false;
-        Wait.Delay = 100;
+        Wait.Delay = 10;
         Wait.Pause = false;
 
         if (debug) {
@@ -543,7 +543,7 @@ public class VoronoiTesselator {
         Log.LogTrace("Chopping borders");
 
         var debug = false;
-        Wait.Delay = 100;
+        Wait.Delay = 10;
         Wait.Pause = false;
 
         if (debug) {
@@ -685,7 +685,7 @@ public class VoronoiTesselator {
         Log.LogTrace("Fixing border winding");
 
         var debug = false;
-        Wait.Delay = 100;
+        Wait.Delay = 10;
         Wait.Pause = false;
 
         if (debug) {
@@ -763,7 +763,7 @@ public class VoronoiTesselator {
         Log.LogTrace("Finding polygons");
 
         var debug = false;
-        Wait.Delay = 100;
+        Wait.Delay = 1;
         Wait.Pause = false;
 
         if (debug) {
@@ -785,14 +785,17 @@ public class VoronoiTesselator {
 
             if (debug) {
                 segment.ShowHighlightedRand();
-                await Wait.ForDelay();
             }
         }
 
         if (debug) {
+            await Wait.ForDelay();
+
             foreach (var segment in nonBorderSegments) {
                 segment.ShowSubdued();
             }
+
+            await Wait.For(1);
         }
 
         while (MapSegments.Any()) {
@@ -819,6 +822,8 @@ public class VoronoiTesselator {
                 }
             }
 
+            // Somehow polygon only had two vertices. Usually happens due to floating point errors
+            // causing intersections to not be detected elsewhere in the tesselation.
             if (polygonVertices.Count < 3) {
                 if (debug) {
                     foreach (var point in polygonVertices) {
@@ -827,9 +832,6 @@ public class VoronoiTesselator {
 
                     Log.LogInformation($"Degenerate case.\nSeed: {Seed}\nIteration: {Iteration}");
                     await Wait.ForContinue();
-
-                    //Debug.Assert(polygonVertices.Count >= 3,
-                    //    $"Degenerate case.\nSeed: {Seed}\nIteration: {Iteration}");
                 }
 
                 break;
@@ -884,6 +886,10 @@ public class VoronoiTesselator {
                 }
 
                 await Wait.ForDelay();
+
+                foreach (var otherSegment in otherSegments) {
+                    otherSegment.ShowSubdued();
+                }
             }
 
             MapSegment? nextSegment = default;
@@ -902,14 +908,10 @@ public class VoronoiTesselator {
 
                 // We have completed the polygon
                 if (polygonSegments.Contains(otherSegment)) {
-                    if (debug) {
-                        otherSegment.ShowSubdued();
-                    }
-
                     break;
                 }
 
-                var farPointCross = Convert.ToSingle(otherSegment.Point2.NearLine(currentSegment));
+                var farPointCross = otherSegment.Point2.NearLine(currentSegment);
 
                 // If both points happen to be on the right side of the line, if I ever support
                 // concave polygons then this will ensure that the leftmost rotated segment is still
@@ -930,6 +932,14 @@ public class VoronoiTesselator {
                 if (debug) {
                     otherSegment.ShowSubdued();
                 }
+            }
+
+            if (debug) {
+                foreach (var otherSegment in otherSegments) {
+                    otherSegment.ShowSubdued();
+                }
+
+                await Wait.For(1);
             }
 
             if (nextSegment is null) {
