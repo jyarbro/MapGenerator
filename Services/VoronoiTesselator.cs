@@ -24,7 +24,9 @@ public class VoronoiTesselator {
     int PointCount { get; set; }
     int Iteration { get; set; }
 
-#pragma warning disable CS8618 // Border is null
+#pragma warning disable CS8618 
+    // Border is assigned in Start()
+    // Random is assigned in Start()
     public VoronoiTesselator(
         ILogger<VoronoiTesselator> log,
         ICanvasWrapper canvas,
@@ -782,13 +784,31 @@ public class VoronoiTesselator {
         // Add the reverse of all segments except on borders
         foreach (var segment in nonBorderSegments) {
             AddSegment(segment.MapPoint2, segment.MapPoint1);
-
-            if (debug) {
-                segment.ShowHighlightedRand();
-            }
         }
 
         if (debug) {
+            var borderSegments = MapSegments.Where(o1 => Border.MapSegments.Any(o2 => o1.Intersects(o2).IntersectionEnd is not null)).ToList();
+
+            Debug.Assert(MapSegments.Count == nonBorderSegments.Count * 2 + borderSegments.Count);
+
+            foreach (var segment in borderSegments) {
+                segment.ShowHighlightedRand();
+            }
+
+            Log.LogInformation($"{borderSegments.Count} border segments");
+
+            await Wait.ForDelay();
+
+            foreach (var segment in borderSegments) {
+                segment.ShowSubdued();
+            }
+
+            foreach (var segment in nonBorderSegments) {
+                segment.ShowHighlightedRand();
+            }
+
+            Log.LogInformation($"{nonBorderSegments.Count} non-border segments");
+
             await Wait.ForDelay();
 
             foreach (var segment in nonBorderSegments) {
@@ -804,22 +824,10 @@ public class VoronoiTesselator {
 
             await FindLeftestSegment(currentSegment, polygonSegments);
 
-            var polygonVertices = new List<MapPoint>();
+            var polygonVertices = polygonSegments.Select(o => o.MapPoint2).ToList();
 
             foreach (var polygonSegment in polygonSegments) {
-                if (!polygonVertices.Contains(polygonSegment.Point1)) {
-                    polygonVertices.Add(polygonSegment.MapPoint1);
-                }
-
-                if (!polygonVertices.Contains(polygonSegment.Point2)) {
-                    polygonVertices.Add(polygonSegment.MapPoint2);
-                }
-
                 RemoveSegment(polygonSegment);
-
-                if (debug) {
-                    await Wait.ForDelay();
-                }
             }
 
             // Somehow polygon only had two vertices. Usually happens due to floating point errors

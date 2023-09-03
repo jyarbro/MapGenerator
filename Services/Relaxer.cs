@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Nrrdio.MapGenerator.Services.Models;
 using Nrrdio.Utilities;
-using WinRT;
 
 namespace Nrrdio.MapGenerator.Services;
 public class Relaxer {
