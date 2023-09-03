@@ -35,16 +35,20 @@ public class Orchestrator {
         Wait = wait;
         VoronoiTesselator = voronoiTesselator;
         Relaxer = relaxer;
-        Seed = Random.Next();
-
-        VoronoiTesselator.Random = Random;
-        VoronoiTesselator.Seed = Seed;
     }
 
     public async Task Start() {
         Log.LogTrace(nameof(Start));
 
         var debug = false;
+
+        Seed = Random.Next();
+
+        VoronoiTesselator.Random = Random;
+        VoronoiTesselator.Seed = Seed;
+
+        Relaxer.Random = Random;
+        Relaxer.Seed = Seed;
 
         if (debug) {
             Log.LogInformation($"Seed: {Seed}");
@@ -60,7 +64,7 @@ public class Orchestrator {
 
         var borderVertices = new List<MapPoint>();
 
-        var borderPolygon = new Circle(new Point(Canvas.Width / 2, Canvas.Height / 2), 300).ToPolygon(6);
+        var borderPolygon = new Circle(new Point(Canvas.Width / 2, Canvas.Height / 2), 300).ToPolygon(6, 3);
 
         foreach (var point in borderPolygon.Vertices) {
             borderVertices.Add(new MapPoint(point));
@@ -79,7 +83,7 @@ public class Orchestrator {
             Canvas.Children.Add(segment.CanvasPath);
         }
 
-        var polygons = await VoronoiTesselator.Start(100, border);
+        var polygons = await VoronoiTesselator.Start(50, border);
 
         //var nestedPolygons = new List<MapPolygon>();
 
@@ -92,6 +96,6 @@ public class Orchestrator {
 
         await Relaxer.Start(segments, border);
 
-        Log.LogInformation("Done. Redraw to continue.");
+        Log.LogInformation("Done.");
     }
 }
