@@ -5,7 +5,6 @@ using Microsoft.UI.Xaml.Shapes;
 using Nrrdio.MapGenerator.Services.Models;
 using Nrrdio.Utilities;
 using Nrrdio.Utilities.Maths;
-using Windows.Devices.I2c.Provider;
 
 namespace Nrrdio.MapGenerator.Services;
 
