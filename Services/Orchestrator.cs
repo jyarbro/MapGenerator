@@ -22,19 +22,22 @@ public class Orchestrator {
     Wait Wait { get; }
     VoronoiTesselator VoronoiTesselator { get; }
     Relaxer Relaxer { get; }
+    River River { get; }
 
     public Orchestrator(
         ICanvasWrapper canvas,
         ILogger<Orchestrator> log,
         Wait wait,
         VoronoiTesselator voronoiTesselator,
-        Relaxer relaxer
+        Relaxer relaxer,
+        River river
     ) {
         Canvas = canvas;
         Log = log;
         Wait = wait;
         VoronoiTesselator = voronoiTesselator;
         Relaxer = relaxer;
+        River = river;
     }
 
     public async Task Start() {
@@ -49,6 +52,9 @@ public class Orchestrator {
 
         Relaxer.Random = Random;
         Relaxer.Seed = Seed;
+
+        River.Random = Random;
+        River.Seed = Seed;
 
         if (debug) {
             Log.LogInformation($"Seed: {Seed}");
@@ -95,6 +101,8 @@ public class Orchestrator {
         var segments = polygons.SelectMany(o => o.MapSegments).ToList();
 
         await Relaxer.Start(segments, border);
+
+        await River.Start(segments, border);
 
         Log.LogInformation("Done.");
     }

@@ -67,6 +67,7 @@ public partial class App : Application {
         services.AddTransient<Orchestrator>();
         services.AddTransient<VoronoiTesselator>();
         services.AddTransient<Relaxer>();
+        services.AddTransient<River>();
 
         services
             .AddOptions<Settings>()
